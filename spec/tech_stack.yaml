@@ -1,0 +1,37 @@
+# 技術堆疊配置
+# 用於指定 automation 階段的實作技術棧
+
+# 前端框架與工具
+frontend:
+  language: TypeScript
+  framework: Next.js 14 (App Router)
+  ui_library: React 18
+  styling: Tailwind CSS
+  state_management: React Hooks (useState, useContext)
+  http_client: fetch API (內建)
+  form_handling: 原生 HTML Forms
+
+# 後端框架與工具
+backend:
+  language: Python
+  framework: FastAPI
+  runtime: 
+  validation: 
+
+# 資料庫
+database:
+  type: PostgreSQL 15
+  client: AsyncPG / SQLModel / SQLAlchemy
+  migration: 手動 SQL 腳本 (init.sql)
+
+# 容器化
+containerization:
+  app: Docker
+  orchestration: Docker Compose
+  base_image: python:3.11-slim (Backend), node:18-alpine (Frontend)
+
+# 開發工具
+dev_tools:
+  package_manager: npm (Frontend), pip/poetry (Backend)
+  linter: ESLint (Frontend), Ruff (Backend)
+  formatter: Prettier (Frontend), Black (Backend)
