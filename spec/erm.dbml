@@ -1,0 +1,97 @@
+Table Agent {
+  name varchar [pk, note: "Agent 的唯一識別名稱"]
+  llm_id varchar [ref: > LLM.model_id, note: "綁定的基礎模型 ID，可為 null (通用 Agent)"]
+  description varchar [note: "Agent 的描述，用於列表顯示"]
+  system_prompt text [note: "Agent 的核心指令 (System Prompt)"]
+  status varchar [note: "Agent 狀態：Active (可用), Unbound (未綁定), Draft (草稿), Retired (已廢棄)"]
+  
+  Note: "定義系統中的對話代理人 (Agent)，封裝了 Prompt、模型配置與工具使用策略"
+}
+
+Table AgentTool {
+  agent_name varchar [ref: > Agent.name]
+  tool_name varchar [ref: > Tool.name]
+  
+  Note: "Agent 與 Tool 的多對多關聯表"
+}
+
+Table Tool {
+  name varchar [pk, note: "工具名稱，如 Calculator, WebSearch"]
+  capabilities json [note: "工具能力的標籤列表 (JSON String Array, e.g. ['math', 'search'])"]
+  
+  Note: "系統支援的外部工具庫"
+}
+
+Table LLM {
+  model_id varchar [pk, note: "模型 ID，如 gpt-4o"]
+  status varchar [note: "模型狀態：Draft, Active, Deprecated"]
+  access_level varchar [note: "存取權限：Public, Admin-Only"]
+  context_window int [note: "Context Window 大小 (Tokens)"]
+  provider varchar [note: "模型供應商，如 OpenAI, Anthropic"]
+  
+  Note: "LLM 註冊表，管理模型的生命週期與權限"
+}
+
+Table ChatTopic {
+  topic_id varchar [pk, note: "對話主題 ID (Config Container)"]
+  agent_id varchar [ref: > Agent.name, note: "此 Topic 基於哪個 Agent 建立"]
+  user_id varchar [ref: > User.user_id, note: "建立此 Topic 的使用者"]
+  current_llm_id varchar [ref: > LLM.model_id, note: "Topic 層級的模型覆寫"]
+  stm_setting int [note: "Short Term Memory 設定"]
+  created_at datetime
+  
+  Note: "對話視窗的配置容器，管理模型參數與工具設定"
+}
+
+Table ChatSession {
+  session_id varchar [pk, note: "對話場次 ID (History Container)"]
+  topic_id varchar [ref: > ChatTopic.topic_id, note: "所屬 Topic"]
+  is_active bool [note: "是否為當前活躍的 Session"]
+  started_at datetime
+  ended_at datetime
+  
+  Note: "實際的對話場次，每次 Clear Topic 會產生新的 Session"
+}
+
+Table ChatMessage {
+  message_id varchar [pk]
+  session_id varchar [ref: > ChatSession.session_id]
+  role varchar [note: "system, user, assistant"]
+  content text [note: "訊息內容"]
+  token_count int [note: "訊息 Token 數"]
+  timestamp datetime
+  
+  Note: "對話歷史訊息，歸屬於 Session"
+}
+
+Table User {
+  user_id varchar [pk]
+  role varchar [note: "Admin, Standard User"]
+  
+  Note: "系統使用者"
+}
+
+Table AuditLog {
+  trace_id varchar [pk, note: "全局唯一的請求追蹤 ID"]
+  user_id varchar [ref: > User.user_id]
+  status_code int [note: "HTTP 狀態碼"]
+  duration_ms int [note: "處理耗時 (ms)"]
+  error_type varchar [note: "錯誤類型，如 ValueError"]
+  stack_trace text [note: "異常堆疊資訊"]
+  path varchar [note: "API 請求路徑"]
+  request_body json [note: "已遮罩敏感資訊的請求內容"]
+  response_body json
+  created_at datetime
+  
+  Note: "系統審計日誌，用於追蹤請求與排查問題"
+}
+
+Table SystemAlert {
+  alert_id varchar [pk]
+  severity varchar [note: "High, Medium, Low"]
+  source varchar [note: "警示來源服務"]
+  reason varchar [note: "觸發原因"]
+  timestamp datetime
+  
+  Note: "系統內部發出的警示事件"
+}

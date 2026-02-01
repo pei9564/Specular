@@ -39,3 +39,20 @@ Feature: Agent 設置 (Agent Configuration)
         With arguments: name="FinanceBot", tools=["StockPredictor"]
       Then Return: 系統應回傳 Error "Tool Not Found"
       And Aggregate: Agent 不應被建立
+
+  Rule: Agent 生命週期管理 (軟刪除)
+    # Lifecycle Rule - Agent 不支援物理刪除，僅能停用以保留歷史紀錄
+
+    Example: 停用 (Archive) 一個現有的 Agent
+      Given Aggregate: 系統中存在 Active Agent "OldBot"
+      When Command: 執行 DisableAgent
+        With arguments: name="OldBot"
+      Then Aggregate: "OldBot" 的狀態應變更為 "Retired"
+      And Event: 系統應發布 Agent_Retired 事件
+
+    Example: 嘗試物理刪除 Agent (被拒絕)
+      Given Aggregate: 系統中存在 Agent "AnyBot"
+      When Command: 執行 DeleteAgent
+        With arguments: name="AnyBot"
+      Then Return: 系統應回傳 Error "Physical Deletion Not Supported"
+      And Aggregate: Agent "AnyBot" 應仍存在於系統中

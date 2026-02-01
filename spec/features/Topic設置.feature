@@ -43,3 +43,16 @@ Feature: 對話主題配置管理
         With arguments: llm_id="gpt-4o"
       Then Return: 系統應回傳 Error "Permission Denied" (權限不足)
       And Aggregate: Topic 配置不應被變更 <- 驗證狀態未被惡意修改
+
+  Rule: 重置對話主題 (Clear Topic) - 封存舊 Session 並開啟新 Session
+    # Reset Rule - 清除視窗內的對話歷史，但不影響 Topic 配置
+
+    Example: 使用者清除對話歷史
+      Given Aggregate: Chat Topic (ID: t_123) 當前有一個 Active Session (ID: s_1)
+        And Content: Session s_1 包含 5 則對話紀錄
+      When Command: 執行 ClearChatTopic (重置對話)
+        With arguments: topic_id="t_123"
+      Then Aggregate: Session s_1 的狀態應變更為 Ended (is_active=false)
+      And Aggregate: 應為 Topic t_123 建立一個新的 Active Session (ID: s_2)
+      And Check: 新 Session s_2 的對話紀錄應為空
+      And Event: 系統應發布 Topic_Cleared 事件

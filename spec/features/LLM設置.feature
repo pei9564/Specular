@@ -43,3 +43,20 @@ Feature: LLM 註冊與配置管理 (LLM Registry Management)
           - status: "SuperActive"
       Then Return: 系統應回傳 Error "Invalid Status Value"
       And Aggregate: 模型狀態不應被變更
+
+  Rule: 模型棄用之運行時影響 (Deprecation Runtime Impact)
+    # Deprecation Rule - 確保已棄用的模型直接導致運行時錯誤，而非靜默失敗或降級
+
+    Example: 使用已棄用模型的 Agent 嘗試進行對話 (失敗)
+      Given Aggregate: Agent "LegacyBot" 綁定模型 "gpt-3.5-legacy"
+      And Aggregate: 模型 "gpt-3.5-legacy" 的狀態已被設為 "Deprecated"
+      When Command: 使用者向 "LegacyBot" 發送訊息
+      Then Return: 系統應回傳 Error "Model Deprecated"
+      And Aggregate: 對話不應被處理
+
+    Example: 使用已棄用模型的 Topic 嘗試進行對話 (失敗)
+      Given Aggregate: Chat Topic (ID: topic-old) 明確指定使用 "gpt-3.5-legacy"
+      And Aggregate: 模型 "gpt-3.5-legacy" 的狀態已被設為 "Deprecated"
+      When Command: 使用者在 "topic-old" 發送訊息
+      Then Return: 系統應回傳 Error "Model Deprecated"
+      And Check: 系統提示使用者需手動更新 Topic 設定
