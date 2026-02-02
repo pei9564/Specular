@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const navItems = [
   { href: '/', label: '首頁', icon: '🏠' },
+  { href: '/topics', label: '對話主題', icon: '💬' },
   { href: '/llms', label: 'LLM 管理', icon: '🤖' },
   { href: '/agents', label: 'Agent 管理', icon: '🎯' },
   { href: '/tools', label: 'Tool 管理', icon: '🔧' },
