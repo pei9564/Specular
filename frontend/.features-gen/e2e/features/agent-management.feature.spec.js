@@ -1,0 +1,34 @@
+// Generated from: e2e/features/agent-management.feature
+import { test } from "playwright-bdd";
+
+test.describe('Agent 管理介面', () => {
+
+  test('使用者進入 Agent 列表頁面', async ({ Given, When, Then, page }) => { 
+    await Given('使用者已開啟瀏覽器', null, { page }); 
+    await When('使用者導航到 "/agents" 頁面', null, { page }); 
+    await Then('頁面標題應包含 "Agent"', null, { page }); 
+  });
+
+  test('使用者建立新的 Agent', async ({ Given, When, Then, And, page }) => { 
+    await Given('使用者在 Agent 列表頁面', null, { page }); 
+    await When('使用者點擊 "新增 Agent" 按鈕', null, { page }); 
+    await And('使用者在 "名稱" 欄位輸入 "TestAgent"', null, { page }); 
+    await And('使用者點擊 "儲存" 按鈕', null, { page }); 
+    await Then('應顯示成功訊息', null, { page }); 
+    await And('列表應包含 "TestAgent"', null, { page }); 
+  });
+
+});
+
+// == technical section ==
+
+test.use({
+  $test: [({}, use) => use(test), { scope: 'test', box: true }],
+  $uri: [({}, use) => use('e2e/features/agent-management.feature'), { scope: 'test', box: true }],
+  $bddFileData: [({}, use) => use(bddFileData), { scope: "test", box: true }],
+});
+
+const bddFileData = [ // bdd-data-start
+  {"pwTestLine":6,"pickleLine":4,"tags":[],"steps":[{"pwStepLine":7,"gherkinStepLine":5,"keywordType":"Context","textWithKeyword":"假設使用者已開啟瀏覽器","stepMatchArguments":[]},{"pwStepLine":8,"gherkinStepLine":6,"keywordType":"Action","textWithKeyword":"當使用者導航到 \"/agents\" 頁面","stepMatchArguments":[{"group":{"start":7,"value":"\"/agents\"","children":[{"start":8,"value":"/agents","children":[{"children":[]}]},{"children":[{"children":[]}]}]},"parameterTypeName":"string"}]},{"pwStepLine":9,"gherkinStepLine":7,"keywordType":"Outcome","textWithKeyword":"那麼頁面標題應包含 \"Agent\"","stepMatchArguments":[{"group":{"start":8,"value":"\"Agent\"","children":[{"start":9,"value":"Agent","children":[{"children":[]}]},{"children":[{"children":[]}]}]},"parameterTypeName":"string"}]}]},
+  {"pwTestLine":12,"pickleLine":9,"tags":[],"steps":[{"pwStepLine":13,"gherkinStepLine":10,"keywordType":"Context","textWithKeyword":"假設使用者在 Agent 列表頁面","stepMatchArguments":[{"group":{"start":5,"value":"Agent","children":[]},"parameterTypeName":"word"}]},{"pwStepLine":14,"gherkinStepLine":11,"keywordType":"Action","textWithKeyword":"當使用者點擊 \"新增 Agent\" 按鈕","stepMatchArguments":[{"group":{"start":6,"value":"\"新增 Agent\"","children":[{"start":7,"value":"新增 Agent","children":[{"children":[]}]},{"children":[{"children":[]}]}]},"parameterTypeName":"string"}]},{"pwStepLine":15,"gherkinStepLine":12,"keywordType":"Action","textWithKeyword":"並且使用者在 \"名稱\" 欄位輸入 \"TestAgent\"","stepMatchArguments":[{"group":{"start":5,"value":"\"名稱\"","children":[{"start":6,"value":"名稱","children":[{"children":[]}]},{"children":[{"children":[]}]}]},"parameterTypeName":"string"},{"group":{"start":15,"value":"\"TestAgent\"","children":[{"start":16,"value":"TestAgent","children":[{"children":[]}]},{"children":[{"children":[]}]}]},"parameterTypeName":"string"}]},{"pwStepLine":16,"gherkinStepLine":13,"keywordType":"Action","textWithKeyword":"並且使用者點擊 \"儲存\" 按鈕","stepMatchArguments":[{"group":{"start":6,"value":"\"儲存\"","children":[{"start":7,"value":"儲存","children":[{"children":[]}]},{"children":[{"children":[]}]}]},"parameterTypeName":"string"}]},{"pwStepLine":17,"gherkinStepLine":14,"keywordType":"Outcome","textWithKeyword":"那麼應顯示成功訊息","stepMatchArguments":[]},{"pwStepLine":18,"gherkinStepLine":15,"keywordType":"Outcome","textWithKeyword":"並且列表應包含 \"TestAgent\"","stepMatchArguments":[{"group":{"start":6,"value":"\"TestAgent\"","children":[{"start":7,"value":"TestAgent","children":[{"children":[]}]},{"children":[{"children":[]}]}]},"parameterTypeName":"string"}]}]},
+]; // bdd-data-end
