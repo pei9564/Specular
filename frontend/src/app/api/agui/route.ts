@@ -66,35 +66,129 @@ function generateId(): string {
   return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-// 模擬 Tool 執行結果
-function executeToolMock(toolName: string, args: Record<string, unknown>): string {
+// 城市座標對照表
+const CITY_COORDINATES: Record<string, { lat: number; lon: number; name: string }> = {
+  'taipei': { lat: 25.0330, lon: 121.5654, name: '台北' },
+  '台北': { lat: 25.0330, lon: 121.5654, name: '台北' },
+  'tokyo': { lat: 35.6762, lon: 139.6503, name: '東京' },
+  '東京': { lat: 35.6762, lon: 139.6503, name: '東京' },
+  'new york': { lat: 40.7128, lon: -74.0060, name: '紐約' },
+  '紐約': { lat: 40.7128, lon: -74.0060, name: '紐約' },
+  'london': { lat: 51.5074, lon: -0.1278, name: '倫敦' },
+  '倫敦': { lat: 51.5074, lon: -0.1278, name: '倫敦' },
+  'paris': { lat: 48.8566, lon: 2.3522, name: '巴黎' },
+  '巴黎': { lat: 48.8566, lon: 2.3522, name: '巴黎' },
+  'singapore': { lat: 1.3521, lon: 103.8198, name: '新加坡' },
+  '新加坡': { lat: 1.3521, lon: 103.8198, name: '新加坡' },
+  'hong kong': { lat: 22.3193, lon: 114.1694, name: '香港' },
+  '香港': { lat: 22.3193, lon: 114.1694, name: '香港' },
+  'shanghai': { lat: 31.2304, lon: 121.4737, name: '上海' },
+  '上海': { lat: 31.2304, lon: 121.4737, name: '上海' },
+  'beijing': { lat: 39.9042, lon: 116.4074, name: '北京' },
+  '北京': { lat: 39.9042, lon: 116.4074, name: '北京' },
+  'seoul': { lat: 37.5665, lon: 126.9780, name: '首爾' },
+  '首爾': { lat: 37.5665, lon: 126.9780, name: '首爾' },
+};
+
+// WMO 天氣代碼對照
+const WMO_CODES: Record<number, string> = {
+  0: '晴天 ☀️',
+  1: '大致晴朗 🌤️',
+  2: '多雲 ⛅',
+  3: '陰天 ☁️',
+  45: '霧 🌫️',
+  48: '霧凇 🌫️',
+  51: '小毛毛雨 🌧️',
+  53: '毛毛雨 🌧️',
+  55: '大毛毛雨 🌧️',
+  61: '小雨 🌧️',
+  63: '中雨 🌧️',
+  65: '大雨 🌧️',
+  71: '小雪 ❄️',
+  73: '中雪 ❄️',
+  75: '大雪 ❄️',
+  80: '陣雨 🌦️',
+  81: '中等陣雨 🌦️',
+  82: '強陣雨 🌦️',
+  95: '雷暴 ⛈️',
+  96: '雷暴+小冰雹 ⛈️',
+  99: '雷暴+大冰雹 ⛈️',
+};
+
+// 真實工具執行
+async function executeTool(toolName: string, args: Record<string, unknown>): Promise<string> {
   switch (toolName) {
-    case 'get_weather':
-      return JSON.stringify({
-        city: args.city,
-        temperature: Math.floor(Math.random() * 30) + 10,
-        condition: ['晴天', '多雲', '陰天', '小雨'][Math.floor(Math.random() * 4)],
-        humidity: Math.floor(Math.random() * 50) + 40 + '%',
-      });
-    case 'calculate':
-      try {
-        const result = eval(args.expression as string);
-        return JSON.stringify({ expression: args.expression, result });
-      } catch {
-        return JSON.stringify({ error: '無法計算' });
+    case 'get_weather': {
+      const cityInput = (args.city as string || '').toLowerCase().trim();
+      const cityData = CITY_COORDINATES[cityInput];
+      
+      if (!cityData) {
+        return JSON.stringify({
+          error: `不支援的城市: ${args.city}`,
+          supported: Object.keys(CITY_COORDINATES).filter(k => !k.includes(' ')).join(', '),
+        });
       }
-    case 'search_database':
+
+      try {
+        // 使用 Open-Meteo 免費天氣 API
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${cityData.lat}&longitude=${cityData.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`;
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Weather API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const current = data.current;
+        
+        return JSON.stringify({
+          city: cityData.name,
+          temperature: `${current.temperature_2m}°C`,
+          condition: WMO_CODES[current.weather_code] || `代碼 ${current.weather_code}`,
+          humidity: `${current.relative_humidity_2m}%`,
+          wind_speed: `${current.wind_speed_10m} km/h`,
+          source: 'Open-Meteo API (真實數據)',
+          timestamp: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
+        });
+      } catch (error) {
+        return JSON.stringify({
+          error: `天氣查詢失敗: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }
+    
+    case 'calculate': {
+      try {
+        // 安全的數學計算（只允許數字和基本運算符）
+        const expr = (args.expression as string).replace(/[^0-9+\-*/().%\s]/g, '');
+        const result = Function(`"use strict"; return (${expr})`)();
+        return JSON.stringify({ 
+          expression: args.expression, 
+          result,
+          note: '使用安全沙箱計算',
+        });
+      } catch {
+        return JSON.stringify({ error: '無法計算此表達式' });
+      }
+    }
+    
+    case 'search_database': {
+      // 模擬資料庫搜尋（實際應用中會連接真實資料庫）
       return JSON.stringify({
         query: args.query,
         results: [
           { id: 1, title: `${args.query} 相關結果 1` },
           { id: 2, title: `${args.query} 相關結果 2` },
         ],
+        note: '模擬結果 - 請連接真實資料庫',
       });
+    }
+    
     default:
       return JSON.stringify({ error: '未知工具' });
   }
 }
+
 
 export async function POST(req: NextRequest) {
   const { 
@@ -125,7 +219,7 @@ export async function POST(req: NextRequest) {
             (e: { toolCallId: string }) => e.toolCallId === pendingToolCallId
           );
           if (execution) {
-            const result = executeToolMock(execution.toolName, execution.args);
+            const result = await executeTool(execution.toolName, execution.args);
             controller.enqueue(encoder.encode(formatSSE({
               type: 'TOOL_CALL_RESULT',
               toolCallId: pendingToolCallId,
