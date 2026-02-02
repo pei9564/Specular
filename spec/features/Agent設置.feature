@@ -5,11 +5,11 @@ Feature: Agent 設置 (Agent Configuration)
 
     Example: 成功建立完整配置的 Agent
       Given Context: 使用者擁有 "gpt-4o" 的使用權限
-      And Aggregate: 系統中已存在 Tool "Calculator"
+      And Aggregate: 系統中已存在 Tool Instance "tool_calc_v1" (Calculator)
       When Command: 執行 CreateAgent，參數如下：
-        | name   | MathGuru     |
-        | tools  | [Calculator] |
-        | llm_id | gpt-4o       |
+        | name   | MathGuru       |
+        | tools  | [tool_calc_v1] |
+        | llm_id | gpt-4o         |
       Then Aggregate: 應建立一個新的 Agent Entity
       And Name: "MathGuru", LLM: "gpt-4o"
       And Event: 系統應發布 Agent_Created 事件
@@ -41,17 +41,17 @@ Feature: Agent 設置 (Agent Configuration)
     Example: 嘗試使用不支援工具的模型 (相容性錯誤)
       Given Aggregate: 模型 "gpt-3.5-turbo-instruct" 設定為不支援 Tool Use
       When Command: 執行 CreateAgent，參數如下：
-        | tools  | [Calculator]           |
+        | tools  | [tool_calc_v1]         |
         | llm_id | gpt-3.5-turbo-instruct |
       Then Return: 系統應回傳 Error "Model Capability Mismatch"
       And Aggregate: Agent 不應被建立
 
     Example: 嘗試綁定系統中不存在的工具 (依賴錯誤)
-      Given Aggregate: 系統中尚未註冊 Tool "StockPredictor"
+      Given Aggregate: 系統中尚未註冊 Tool Instance "tool_stock_prediction"
       When Command: 執行 CreateAgent，參數如下：
-        | name  | FinanceBot       |
-        | tools | [StockPredictor] |
-      Then Return: 系統應回傳 Error "Tool Not Found"
+        | name  | FinanceBot              |
+        | tools | [tool_stock_prediction] |
+      Then Return: 系統應回傳 Error "Tool Instance Not Found"
       And Aggregate: Agent 不應被建立
 
   Rule: Agent 生命週期管理 (軟刪除)
@@ -70,3 +70,10 @@ Feature: Agent 設置 (Agent Configuration)
         | name | AnyBot |
       Then Return: 系統應回傳 Error "Physical Deletion Not Supported"
       And Aggregate: Agent "AnyBot" 應仍存在於系統中
+
+    Example: Agent 停用後，既存 Topic 變更為唯讀模式
+      Given Aggregate: Agent "OldBot" 狀態為 "Retired"
+      And Aggregate: 存在基於 "OldBot" 的 Chat Topic "Topic-A"
+      When Command: 使用者在 "Topic-A" 發送新訊息
+      Then Return: 系統應回傳 Error "Agent Retired"
+      And Aggregate: Topic "Topic-A" 應不允許新增對話紀錄，但可查詢歷史清單

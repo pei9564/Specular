@@ -20,6 +20,19 @@ backend:
   runtime: 
   validation: 
 
+# LLM 整合與 Orchestration
+llm_integration:
+  framework: LangChain (Python)
+  core_modules: 
+    - langchain-openai (用於 OpenAI Compatible 介面)
+    - langchain-community (用於特殊工具整合)
+    - langgraph (用於 Stateful Agent 流程控制)
+  interface_standard: OpenAI Compatible API (/v1/chat/completions)
+  supported_providers:
+    - OpenAI (Cloud)
+    - vLLM (On-Premise)
+    - Ollama (Local)
+
 # 資料庫
 database:
   type: PostgreSQL 15

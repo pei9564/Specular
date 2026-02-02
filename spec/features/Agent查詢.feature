@@ -10,7 +10,7 @@ Feature: Agent 探索與能力檢視 (Agent Discovery & Inspection)
         | Generic Helper | null   | []           | 通用助手 (未綁定) |
       When Query: 執行 ListAvailableAgents
       Then Read Model: 回傳清單應包含 2 筆資料
-      And Read Model: "MathGuru" 應標示 capabilities=["Calculator"]
+      And Read Model: "MathGuru" 應列出已綁定工具 Tools=["Calculator"]
       And Read Model: "Generic Helper" 應標示 status="Unbound"
 
   Rule: 檢視單一 Agent 的完整詳細規格

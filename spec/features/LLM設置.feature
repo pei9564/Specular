@@ -46,15 +46,38 @@ Feature: LLM 註冊與配置管理 (LLM Registry Management)
       Then Return: 系統應回傳 Error "Invalid Status Value"
       And Aggregate: 模型狀態不應被變更
 
-  Rule: 模型棄用之運行時影響 (Deprecation Runtime Impact)
-    # Deprecation Rule - 確保已棄用的模型直接導致運行時錯誤，而非靜默失敗或降級
+  Rule: 支援多種後端供應商配置 (Provider Configuration)
+    # Configuration Rules - 針對 OpenAI Compatible, vLLM, Ollama 提供差異化設定
 
-    Example: 使用已棄用模型的 Agent 嘗試進行對話 (失敗)
-      Given Aggregate: Agent "LegacyBot" 綁定模型 "gpt-3.5-legacy"
-      And Aggregate: 模型 "gpt-3.5-legacy" 的狀態已被設為 "Deprecated"
-      When Command: 使用者向 "LegacyBot" 發送訊息
-      Then Return: 系統應回傳 Error "Model Deprecated"
-      And Aggregate: 對話不應被處理
+    Example: 註冊標準 OpenAI 相容服務
+      Given Context: 使用者為管理員
+      When Command: 執行 RegisterModel，參數如下：
+        | model_id | gpt-4o-mini                                                      |
+        | provider | openai                                                           |
+        | config   | { "api_key": "sk-...", "base_url": "https://api.openai.com/v1" } |
+      Then Aggregate: 應建立一個 "openai" 類型的 LLM
+      And Check: 系統應驗證 API Key 格式
+
+    Example: 註冊 vLLM 自架服務 (OpenAI Compatible Interface)
+      Given Context: 企業內部架設了 vLLM server
+      When Command: 執行 RegisterModel，參數如下：
+        | model_id | internal-llama3-70b                                              |
+        | provider | vllm                                                             |
+        | config   | { "base_url": "http://10.0.0.5:8000/v1", "max_model_len": 4096 } |
+      Then Aggregate: 應建立一個 "vllm" 類型的 LLM
+      And Check: 基礎 URL 應指向內部網路
+
+    Example: 註冊 Ollama 本地模型
+      Given Context: 使用者在本機運行 Ollama
+      When Command: 執行 RegisterModel，參數如下：
+        | model_id | mistral:latest                                               |
+        | provider | ollama                                                       |
+        | config   | { "base_url": "http://localhost:11434", "keep_alive": "5m" } |
+      Then Aggregate: 應建立一個 "ollama" 類型的 LLM
+      And Check: 系統應嘗試連線確認模型已 pull 至 Ollama
+
+  Rule: 模型棄用之運行時影響 (Deprecation Runtime Impact)
+    # Deprecation Rule - 確保已棄用的模型直接導致運行時錯誤
 
     Example: 使用已棄用模型的 Topic 嘗試進行對話 (失敗)
       Given Aggregate: Chat Topic (ID: topic-old) 明確指定使用 "gpt-3.5-legacy"

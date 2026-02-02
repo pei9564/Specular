@@ -8,18 +8,31 @@ Table Agent {
   Note: "定義系統中的對話代理人 (Agent)，封裝了 Prompt、模型配置與工具使用策略"
 }
 
-Table AgentTool {
-  agent_name varchar [ref: > Agent.name]
-  tool_name varchar [ref: > Tool.name]
+Table ToolTemplate {
+  template_id varchar [pk, note: "工具模板唯一 ID，如 web_scraper"]
+  name varchar [note: "模板名稱"]
+  description varchar [note: "模板功能描述"]
+  parameter_schema json [note: "JSON Schema 定義，描述該工具接受的參數結構"]
   
-  Note: "Agent 與 Tool 的多對多關聯表"
+  Note: "系統底層的工具定義 (Template)"
 }
 
-Table Tool {
-  name varchar [pk, note: "工具名稱，如 Calculator, WebSearch"]
-  capabilities json [note: "工具能力的標籤列表 (JSON String Array, e.g. ['math', 'search'])"]
+Table ToolInstance {
+  instance_id varchar [pk, note: "工具實例 ID，如 ptt_scraper"]
+  template_id varchar [ref: > ToolTemplate.template_id]
+  name varchar [note: "實例顯示名稱，如 'PTT Scraper'"]
+  description varchar [note: "實例描述，會注入到 System Prompt"]
+  configuration json [note: "預設參數值 (Config)，如 { target_site: 'ptt.cc' }"]
+  created_by varchar [ref: > User.user_id]
   
-  Note: "系統支援的外部工具庫"
+  Note: "使用者建立的具體工具實例 (Instance)"
+}
+
+Table AgentTool {
+  agent_name varchar [ref: > Agent.name]
+  tool_instance_id varchar [ref: > ToolInstance.instance_id]
+  
+  Note: "Agent 與 ToolInstance 的多對多關聯"
 }
 
 Table LLM {
@@ -56,8 +69,8 @@ Table ChatSession {
 Table ChatMessage {
   message_id varchar [pk]
   session_id varchar [ref: > ChatSession.session_id]
-  role varchar [note: "system, user, assistant"]
-  content text [note: "訊息內容"]
+  role varchar [note: "system, user, assistant, tool"]
+  content json [note: "訊息內容 (JSON)，支援純文字或結構化資料如 Tool Calls/Results"]
   token_count int [note: "訊息 Token 數"]
   timestamp datetime
   
@@ -74,6 +87,7 @@ Table User {
 Table AuditLog {
   trace_id varchar [pk, note: "全局唯一的請求追蹤 ID"]
   user_id varchar [ref: > User.user_id]
+  session_id varchar [ref: > ChatSession.session_id, note: "關聯的對話場次 ID，可用於追蹤對話過程的 API 細節"]
   status_code int [note: "HTTP 狀態碼"]
   duration_ms int [note: "處理耗時 (ms)"]
   error_type varchar [note: "錯誤類型，如 ValueError"]
