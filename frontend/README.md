@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Specular AI Frontend
 
-## Getting Started
+AI Agent 配置與管理平台前端應用程式。
 
-First, run the development server:
+## 技術棧
+
+- **框架**: Next.js 14 (App Router)
+- **語言**: TypeScript
+- **樣式**: Tailwind CSS
+- **AI 整合**: CopilotKit (AG-UI Protocol)
+- **測試**: Playwright + playwright-bdd
+
+## 快速開始
+
+### 1. 安裝依賴
+
+```bash
+npm install
+```
+
+### 2. 設定環境變數
+
+```bash
+cp .env.local.example .env.local
+# 編輯 .env.local 設定 OPENAI_API_KEY
+```
+
+### 3. 啟動開發伺服器
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+開啟 [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 頁面結構
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| 路徑 | 功能 |
+|------|------|
+| `/` | 首頁 Dashboard |
+| `/topics` | 對話主題管理 |
+| `/topics/[id]` | Chat 對話介面 (SSE 串流) |
+| `/copilot` | CopilotKit Chat (AG-UI) |
+| `/history` | 歷史查詢 |
+| `/llms` | LLM 管理 |
+| `/agents` | Agent 管理 |
+| `/tools` | Tool 管理 |
 
-## Learn More
+## BDD 測試
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run bddgen   # 生成測試檔案
+npm run e2e      # 執行測試
+npm run e2e:ui   # Playwright UI 模式
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## CopilotKit 整合
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+本專案整合 CopilotKit AG-UI 協議，支援：
 
-## Deploy on Vercel
+- **Chat UI**: 內建對話介面元件
+- **Human-in-the-Loop**: Tool 執行確認流程
+- **SSE 串流**: 即時 AI 回應
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+詳見 `/copilot` 頁面的實作範例。
