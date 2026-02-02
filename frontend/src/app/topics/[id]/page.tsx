@@ -76,10 +76,11 @@ export default function TopicChatPage() {
     };
     
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsStreaming(true);
 
-    // Simulate streaming response
+    // Create assistant message placeholder
     const assistantMessage: Message = {
       id: `m${Date.now() + 1}`,
       role: 'assistant',
@@ -89,16 +90,64 @@ export default function TopicChatPage() {
     
     setMessages(prev => [...prev, assistantMessage]);
 
-    // Mock streaming effect
-    const mockResponse = `這是一個模擬的 AI 回應。\n\n您的訊息是：「${input}」\n\n目前使用的模型是 ${topic.llm_id}，STM 設定為 ${topic.stm_setting}。`;
-    
-    for (let i = 0; i <= mockResponse.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 20));
+    try {
+      // Call SSE streaming API
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: currentInput,
+          model: topic.llm_id,
+          stm: topic.stm_setting,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Stream request failed');
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                
+                if (data.type === 'delta') {
+                  accumulatedContent += data.content;
+                  setMessages(prev => {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = {
+                      ...updated[updated.length - 1],
+                      content: accumulatedContent,
+                    };
+                    return updated;
+                  });
+                } else if (data.type === 'done') {
+                  console.log(`Stream complete: ${data.total_tokens} tokens, model: ${data.model}`);
+                }
+              } catch {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Stream error:', error);
       setMessages(prev => {
         const updated = [...prev];
         updated[updated.length - 1] = {
           ...updated[updated.length - 1],
-          content: mockResponse.slice(0, i),
+          content: '抱歉，發生錯誤。請稍後再試。',
         };
         return updated;
       });
