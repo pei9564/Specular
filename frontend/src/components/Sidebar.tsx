@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 const navItems = [
   { href: '/', label: '首頁', icon: '🏠' },
   { href: '/topics', label: '對話主題', icon: '💬' },
+  { href: '/agui', label: 'AG-UI Chat', icon: '🚀' },
   { href: '/copilot', label: 'Copilot Chat', icon: '🤖' },
   { href: '/history', label: '歷史查詢', icon: '📜' },
   { href: '/llms', label: 'LLM 管理', icon: '⚙️' },
