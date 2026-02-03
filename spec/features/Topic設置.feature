@@ -65,15 +65,15 @@ Feature: 對話主題配置管理
       And 系統應發布 Topic_Model_Downgraded 事件
       And 訊息應成功處理，但系統應提示使用者「模型已因權限變動自動切換」
 
-  Rule: 重置對話主題 (Clear Topic) - 封存舊 Session 並開啟新 Session
+  Rule: 重置對話主題 (Clear Topic) - 封存舊 Thread 並開啟新 Thread
     # Reset Rule - 清除視窗內的對話歷史，但不影響 Topic 配置
 
     Example: 使用者清除對話歷史
-      Given Chat Topic (ID: t_123) 當前有一個活躍 Session (ID: s_1, is_active=true)
-      And Session s_1 包含 5 則對話紀錄
+      Given Chat Topic (ID: t_123) 當前有一個活躍 Thread (ID: th_1, is_active=true)
+      And Thread th_1 包含 5 則對話紀錄
       When 執行 ClearChatTopic (重置對話)，參數如下：
         | topic_id | t_123 |
-      Then Session s_1 的 is_active 應變更為 false
-      And 應為 Topic t_123 建立一個新的 Session (ID: s_2, is_active=true)
-      And 新 Session s_2 的對話紀錄應為空
+      Then Thread th_1 的 is_active 應變更為 false
+      And 應為 Topic t_123 建立一個新的 Thread (ID: th_2, is_active=true)
+      And 新 Thread th_2 的對話紀錄應為空
       And 系統應發布 Topic_Cleared 事件

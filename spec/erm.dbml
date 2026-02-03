@@ -68,21 +68,21 @@ Table ChatTopic {
   Note: "對話視窗的配置容器，管理模型參數與工具設定"
 }
 
-Table ChatSession {
-  session_id varchar [pk, note: "對話場次 ID (History Container)"]
+Table ChatThread {
+  thread_id varchar [pk, note: "對話線程 ID (History Container)"]
   topic_id varchar [ref: > ChatTopic.topic_id, note: "所屬 Topic"]
-  is_active bool [note: "是否為當前活躍的 Session (True: 進行中, False: 已結束/封存)"]
+  is_active bool [note: "是否為當前活躍的 Thread (True: 進行中, False: 已結束/封存)"]
   started_at datetime
   ended_at datetime
   created_at datetime
   updated_at datetime
   
-  Note: "實際的對話場次，每次 Clear Topic 會產生新的 Session"
+  Note: "實際的對話線程，每次 Clear Topic 會產生新的 Thread"
 }
 
 Table ChatMessage {
   message_id varchar [pk]
-  session_id varchar [ref: > ChatSession.session_id]
+  thread_id varchar [ref: > ChatThread.thread_id]
   role varchar [note: "system, user, assistant, tool"]
   content json [note: "訊息內容，遵循 OpenAI API 格式 (含 content, tool_calls, tool_call_id 等)"]
   token_count int [note: "訊息 Token 數"]
@@ -90,7 +90,7 @@ Table ChatMessage {
   created_at datetime
   updated_at datetime
   
-  Note: "對話歷史訊息，歸屬於 Session。此資料採永久保留政策。"
+  Note: "對話歷史訊息，歸屬於 Thread。此資料採永久保留政策。"
 }
 
 Table User {
@@ -105,7 +105,7 @@ Table User {
 Table AuditLog {
   trace_id varchar [pk, note: "全局唯一的請求追蹤 ID"]
   user_id varchar [ref: > User.user_id]
-  session_id varchar [ref: > ChatSession.session_id, note: "關聯的對話場次 ID，可用於追蹤對話過程的 API 細節"]
+  thread_id varchar [ref: > ChatThread.thread_id, note: "關聯的對話線程 ID，可用於追蹤對話過程的 API 細節"]
   status_code int [note: "HTTP 狀態碼"]
   duration_ms int [note: "處理耗時 (ms)"]
   error_type varchar [note: "錯誤類型，如 ValueError"]

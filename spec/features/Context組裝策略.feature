@@ -45,7 +45,7 @@ Feature: 上下文組裝策略 (Context Assembly Strategy)
       Given 使用者輸入內容為 "   " (空白字元)
       When 使用者執行 SubmitChatMessage
       Then 系統應回傳 Error "Invalid Request"
-      And Chat Session 不應新增該訊息
+      And ChatThread 不應新增該訊息
 
   Rule: 敏感操作前的檢查點驗證 (Human-in-the-loop Checkpoint)
     # HITL Rule - 對於具有副作用的工具 (Side-effect Tools)，在執行前需暫停並徵求使用者同意
