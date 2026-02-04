@@ -66,29 +66,35 @@ function generateId(): string {
   return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-// 城市座標對照表
-const CITY_COORDINATES: Record<string, { lat: number; lon: number; name: string }> = {
-  'taipei': { lat: 25.0330, lon: 121.5654, name: '台北' },
-  '台北': { lat: 25.0330, lon: 121.5654, name: '台北' },
-  'tokyo': { lat: 35.6762, lon: 139.6503, name: '東京' },
-  '東京': { lat: 35.6762, lon: 139.6503, name: '東京' },
-  'new york': { lat: 40.7128, lon: -74.0060, name: '紐約' },
-  '紐約': { lat: 40.7128, lon: -74.0060, name: '紐約' },
-  'london': { lat: 51.5074, lon: -0.1278, name: '倫敦' },
-  '倫敦': { lat: 51.5074, lon: -0.1278, name: '倫敦' },
-  'paris': { lat: 48.8566, lon: 2.3522, name: '巴黎' },
-  '巴黎': { lat: 48.8566, lon: 2.3522, name: '巴黎' },
-  'singapore': { lat: 1.3521, lon: 103.8198, name: '新加坡' },
-  '新加坡': { lat: 1.3521, lon: 103.8198, name: '新加坡' },
-  'hong kong': { lat: 22.3193, lon: 114.1694, name: '香港' },
-  '香港': { lat: 22.3193, lon: 114.1694, name: '香港' },
-  'shanghai': { lat: 31.2304, lon: 121.4737, name: '上海' },
-  '上海': { lat: 31.2304, lon: 121.4737, name: '上海' },
-  'beijing': { lat: 39.9042, lon: 116.4074, name: '北京' },
-  '北京': { lat: 39.9042, lon: 116.4074, name: '北京' },
-  'seoul': { lat: 37.5665, lon: 126.9780, name: '首爾' },
-  '首爾': { lat: 37.5665, lon: 126.9780, name: '首爾' },
-};
+// 動態地理編碼 - 使用 Open-Meteo Geocoding API
+async function geocodeCity(cityName: string): Promise<{ lat: number; lon: number; name: string; country: string } | null> {
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=zh`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.error(`Geocoding API error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.results || data.results.length === 0) {
+      return null;
+    }
+
+    const result = data.results[0];
+    return {
+      lat: result.latitude,
+      lon: result.longitude,
+      name: result.name,
+      country: result.country || '',
+    };
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    return null;
+  }
+}
 
 // WMO 天氣代碼對照
 const WMO_CODES: Record<number, string> = {
@@ -119,30 +125,33 @@ const WMO_CODES: Record<number, string> = {
 async function executeTool(toolName: string, args: Record<string, unknown>): Promise<string> {
   switch (toolName) {
     case 'get_weather': {
-      const cityInput = (args.city as string || '').toLowerCase().trim();
-      const cityData = CITY_COORDINATES[cityInput];
-      
+      const cityInput = (args.city as string || '').trim();
+
+      // 動態查詢城市座標
+      const cityData = await geocodeCity(cityInput);
+
       if (!cityData) {
         return JSON.stringify({
-          error: `不支援的城市: ${args.city}`,
-          supported: Object.keys(CITY_COORDINATES).filter(k => !k.includes(' ')).join(', '),
+          error: `找不到城市: ${args.city}`,
+          hint: '請嘗試使用城市名稱（如：台北、東京、瑞士、蘇黎世）',
         });
       }
 
       try {
         // 使用 Open-Meteo 免費天氣 API
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${cityData.lat}&longitude=${cityData.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`;
-        
+
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`Weather API error: ${response.status}`);
         }
-        
+
         const data = await response.json();
         const current = data.current;
-        
+
         return JSON.stringify({
           city: cityData.name,
+          country: cityData.country,
           temperature: `${current.temperature_2m}°C`,
           condition: WMO_CODES[current.weather_code] || `代碼 ${current.weather_code}`,
           humidity: `${current.relative_humidity_2m}%`,
@@ -156,14 +165,14 @@ async function executeTool(toolName: string, args: Record<string, unknown>): Pro
         });
       }
     }
-    
+
     case 'calculate': {
       try {
         // 安全的數學計算（只允許數字和基本運算符）
         const expr = (args.expression as string).replace(/[^0-9+\-*/().%\s]/g, '');
         const result = Function(`"use strict"; return (${expr})`)();
-        return JSON.stringify({ 
-          expression: args.expression, 
+        return JSON.stringify({
+          expression: args.expression,
           result,
           note: '使用安全沙箱計算',
         });
@@ -171,7 +180,7 @@ async function executeTool(toolName: string, args: Record<string, unknown>): Pro
         return JSON.stringify({ error: '無法計算此表達式' });
       }
     }
-    
+
     case 'search_database': {
       // 模擬資料庫搜尋（實際應用中會連接真實資料庫）
       return JSON.stringify({
@@ -183,7 +192,7 @@ async function executeTool(toolName: string, args: Record<string, unknown>): Pro
         note: '模擬結果 - 請連接真實資料庫',
       });
     }
-    
+
     default:
       return JSON.stringify({ error: '未知工具' });
   }
@@ -191,8 +200,8 @@ async function executeTool(toolName: string, args: Record<string, unknown>): Pro
 
 
 export async function POST(req: NextRequest) {
-  const { 
-    message, 
+  const {
+    message,
     model = 'llama3.1:latest',
     toolExecutions = [],  // 已確認執行的 tool calls
     pendingToolCallId,     // 待確認的 tool call ID（用於 HIL 回應）
