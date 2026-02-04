@@ -1,0 +1,36 @@
+# FastAPI 核心
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# 資料庫
+asyncpg==0.29.0
+sqlalchemy==2.0.25
+sqlmodel==0.0.14
+
+# LangChain 整合
+langchain==0.1.0
+langchain-openai==0.0.2
+langchain-community==0.0.10
+langgraph==0.0.20
+
+# HTTP 客戶端
+httpx==0.26.0
+aiohttp==3.9.1
+
+# 工具與輔助
+python-dotenv==1.0.0
+python-multipart==0.0.6
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# 日誌與監控
+structlog==24.1.0
+
+# 開發工具
+ruff==0.1.14
+black==23.12.1
+pytest==7.4.4
+pytest-asyncio==0.23.3
+httpx==0.26.0

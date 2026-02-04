@@ -17,8 +17,8 @@ frontend:
 backend:
   language: Python
   framework: FastAPI
-  runtime: 
-  validation: 
+  runtime: Uvicorn (ASGI Server)
+  validation: Pydantic v2
 
 # LLM 整合與 Orchestration
 llm_integration:

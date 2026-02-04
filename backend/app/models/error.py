@@ -1,0 +1,49 @@
+"""
+通用錯誤響應模型
+"""
+
+from typing import Any, Optional
+
+from pydantic import BaseModel
+
+
+class ErrorResponse(BaseModel):
+    """錯誤響應"""
+
+    code: str
+    message: str
+    details: Optional[Any] = None
+
+
+class ErrorCode:
+    """錯誤碼常量"""
+
+    # 通用錯誤
+    INVALID_REQUEST = "INVALID_REQUEST"
+    UNAUTHORIZED = "UNAUTHORIZED"
+    PERMISSION_DENIED = "PERMISSION_DENIED"
+    RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND"
+    INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
+    SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
+
+    # Agent 相關
+    AGENT_NOT_FOUND = "AGENT_NOT_FOUND"
+    AGENT_ALREADY_EXISTS = "AGENT_ALREADY_EXISTS"
+
+    # LLM 相關
+    LLM_NOT_FOUND = "LLM_NOT_FOUND"
+    LLM_INACTIVE = "LLM_INACTIVE"
+    LLM_ACCESS_DENIED = "LLM_ACCESS_DENIED"
+
+    # Tool 相關
+    TOOL_NOT_FOUND = "TOOL_NOT_FOUND"
+    TOOL_TEMPLATE_NOT_FOUND = "TOOL_TEMPLATE_NOT_FOUND"
+    TOOL_VALIDATION_FAILED = "TOOL_VALIDATION_FAILED"
+
+    # Topic 相關
+    TOPIC_NOT_FOUND = "TOPIC_NOT_FOUND"
+
+    # Message 相關
+    MESSAGE_EMPTY = "MESSAGE_EMPTY"
+    TOKEN_LIMIT_EXCEEDED = "TOKEN_LIMIT_EXCEEDED"
+    CONTENT_FILTER = "CONTENT_FILTER"
