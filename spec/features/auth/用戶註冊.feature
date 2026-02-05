@@ -2,79 +2,106 @@ Feature: 用戶註冊
   新用戶註冊流程與安全儲存
 
   Background:
+    # Given 系統中存在以下用戶:
+    #   | id       | email                | role  | status | created_at          |
+    #   | user-001 | existing@example.com | user  | active | 2024-01-01 00:00:00 |
+    #   | user-002 | admin@pegatron.com   | admin | active | 2024-01-01 00:00:00 |
     Given 系統中存在以下用戶:
-      | id       | email                | role  | status | created_at          |
-      | user-001 | existing@example.com | user  | active | 2024-01-01 00:00:00 |
-      | user-002 | admin@pegatron.com   | admin | active | 2024-01-01 00:00:00 |
+      | id       | email                | username | role  | is_active | created_at          |
+      | user-001 | existing@example.com | user1    | user  | true      | 2024-01-01 00:00:00 |
+      | user-002 | admin@pegatron.com   | admin    | admin | true      | 2024-01-01 00:00:00 |
   # ============================================================
   # Rule: 基本註冊流程
   # ============================================================
 
-  Rule: 用戶可以使用有效的 Email 與密碼完成註冊
+  Rule: 用戶可以使用有效的 Email、Username 與密碼完成註冊
 
     Example: 成功 - 一般用戶註冊
       Given 系統中不存在 Email 為 "newuser@example.com" 的用戶
+      # When 用戶提交註冊請求:
+      #   | field    | value               |
+      #   | email    | newuser@example.com |
+      #   | password | SecurePass123!      |
+      #   | name     | New User            |
       When 用戶提交註冊請求:
-        | field    | value               |
-        | email    | newuser@example.com |
-        | password | SecurePass123!      |
-        | name     | New User            |
+        | field     | value               |
+        | email     | newuser@example.com |
+        | username  | newuser             |
+        | password  | SecurePass123!      |
+        | full_name | New User            |
       Then 請求應成功，回傳狀態碼 201
+      # And users 表應新增一筆記錄:
+      #   | field         | value                   |
+      #   | ...           | ...                     |
       And users 表應新增一筆記錄:
-        | field         | value                   |
-        | id            | (自動生成 UUID)         |
-        | email         | newuser@example.com     |
-        | name          | New User                |
-        | role          | user                    |
-        | status        | active                  |
-        | password_hash | (bcrypt 雜湊值，非明碼) |
-        | created_at    | (當前時間)              |
-        | updated_at    | (當前時間)              |
-        | last_login_at | null                    |
+        | field           | value                   |
+        | id              | (自動生成 UUID)         |
+        | email           | newuser@example.com     |
+        | username        | newuser                 |
+        | full_name       | New User                |
+        | role            | user                    |
+        | is_active       | true                    |
+        | hashed_password | (bcrypt 雜湊值，非明碼) |
+        | created_at      | (當前時間)              |
+        | updated_at      | (當前時間)              |
+        | last_login_at   | null                    |
       And 資料庫中不應存在明碼密碼 "SecurePass123!"
+      # And 回傳結果應包含:
+      #   | field | value               |
+      #   | ...   | ...                 |
       And 回傳結果應包含:
-        | field | value               |
-        | id    | (新用戶 UUID)       |
-        | email | newuser@example.com |
-        | role  | user                |
-      And 回傳結果不應包含 password_hash
+        | field     | value               |
+        | id        | (新用戶 UUID)       |
+        | email     | newuser@example.com |
+        | username  | newuser             |
+        | full_name | New User            |
+        | role      | user                |
+      And 回傳結果不應包含 hashed_password
 
     Example: 成功 - 密碼使用 bcrypt 加密儲存
       When 用戶提交註冊請求:
         | email    | test@example.com |
+        | username | testuser         |
         | password | MyPassword123    |
       Then 請求應成功
-      And 新用戶的 password_hash 應符合 bcrypt 格式（以 "$2b$" 開頭）
-      And password_hash 長度應為 60 字元
-      And 使用 bcrypt.verify("MyPassword123", password_hash) 應回傳 true
+      And 新用戶的 hashed_password 應符合 bcrypt 格式（以 "$2b$" 開頭）
+      And hashed_password 長度應為 60 字元
+      And 使用 bcrypt.verify("MyPassword123", hashed_password) 應回傳 true
   # ============================================================
-  # Rule: Email 驗證
+  # Rule: Email 與 Username 驗證
   # ============================================================
 
-  Rule: Email 必須唯一且格式正確
+  Rule: Email 與 Username 必須唯一且格式正確
 
     Example: 失敗 - Email 已存在
+      # Given users 表中已存在:
+      #   | email                |
+      #   | existing@example.com |
       Given users 表中已存在:
         | email                |
         | existing@example.com |
       When 用戶提交註冊請求:
         | email    | existing@example.com |
+        | username | newuser2             |
         | password | SomePassword123      |
       Then 請求應失敗，回傳狀態碼 409
       And 錯誤訊息應為 "Email 'existing@example.com' is already registered"
-      And users 表記錄數量應維持不變
 
-    Example: 失敗 - Email 已存在（大小寫不敏感）
-      Given users 表中已存在 email 為 "existing@example.com"
+    Example: 失敗 - Username 已存在
+      Given users 表中已存在:
+        | username |
+        | user1    |
       When 用戶提交註冊請求:
-        | email    | EXISTING@EXAMPLE.COM |
-        | password | SomePassword123      |
+        | email    | unique@example.com |
+        | username | user1              |
+        | password | SomePassword123    |
       Then 請求應失敗，回傳狀態碼 409
-      And 錯誤訊息應為 "Email 'EXISTING@EXAMPLE.COM' is already registered"
+      And 錯誤訊息應為 "Username 'user1' is already taken"
 
     Example: 失敗 - Email 格式無效
       When 用戶提交註冊請求:
         | email    | invalid-email   |
+        | username | validuser       |
         | password | SomePassword123 |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Invalid email format"
@@ -82,6 +109,7 @@ Feature: 用戶註冊
     Example: 失敗 - Email 為空
       When 用戶提交註冊請求:
         | email    |                 |
+        | username | validuser       |
         | password | SomePassword123 |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Email is required"

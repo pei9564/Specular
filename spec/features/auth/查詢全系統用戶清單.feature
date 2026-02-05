@@ -3,12 +3,12 @@ Feature: 查詢全系統用戶清單
 
   Background:
     Given 系統中存在以下用戶:
-      | id       | email              | name         | role  | status   | created_at          | last_login_at       |
-      | user-001 | alice@example.com  | Alice Chen   | user  | active   | 2024-01-01 10:00:00 | 2024-01-15 08:30:00 |
-      | user-002 | bob@example.com    | Bob Wang     | user  | active   | 2024-01-02 11:00:00 | 2024-01-14 09:00:00 |
-      | user-003 | carol@example.com  | Carol Liu    | user  | inactive | 2024-01-03 12:00:00 | 2024-01-10 10:00:00 |
-      | user-004 | david@example.com  | David Lee    | admin | active   | 2024-01-04 13:00:00 | 2024-01-15 11:00:00 |
-      | user-005 | admin@pegatron.com | System Admin | admin | active   | 2024-01-01 00:00:00 | 2024-01-15 12:00:00 |
+      | id       | email              | full_name    | role  | is_active | created_at          | last_login_at       |
+      | user-001 | alice@example.com  | Alice Chen   | user  | true      | 2024-01-01 10:00:00 | 2024-01-15 08:30:00 |
+      | user-002 | bob@example.com    | Bob Wang     | user  | true      | 2024-01-02 11:00:00 | 2024-01-14 09:00:00 |
+      | user-003 | carol@example.com  | Carol Liu    | user  | false     | 2024-01-03 12:00:00 | 2024-01-10 10:00:00 |
+      | user-004 | david@example.com  | David Lee    | admin | true      | 2024-01-04 13:00:00 | 2024-01-15 11:00:00 |
+      | user-005 | admin@pegatron.com | System Admin | admin | true      | 2024-01-01 00:00:00 | 2024-01-15 12:00:00 |
   # ============================================================
   # Rule: 權限控制
   # ============================================================
@@ -20,12 +20,12 @@ Feature: 查詢全系統用戶清單
       When 使用者發送 GET 請求至 "/api/admin/users"
       Then 請求應成功，回傳狀態碼 200
       And 回傳結果應包含所有用戶:
-        | id       | email              | name         | role  | status   |
-        | user-001 | alice@example.com  | Alice Chen   | user  | active   |
-        | user-002 | bob@example.com    | Bob Wang     | user  | active   |
-        | user-003 | carol@example.com  | Carol Liu    | user  | inactive |
-        | user-004 | david@example.com  | David Lee    | admin | active   |
-        | user-005 | admin@pegatron.com | System Admin | admin | active   |
+        | id       | email              | full_name    | role  | is_active |
+        | user-001 | alice@example.com  | Alice Chen   | user  | true      |
+        | user-002 | bob@example.com    | Bob Wang     | user  | true      |
+        | user-003 | carol@example.com  | Carol Liu    | user  | false     |
+        | user-004 | david@example.com  | David Lee    | admin | true      |
+        | user-005 | admin@pegatron.com | System Admin | admin | true      |
 
     Example: 失敗 - 一般用戶禁止查詢
       Given 使用者 "alice@example.com" 已登入（角色為 user）
@@ -99,26 +99,26 @@ Feature: 查詢全系統用戶清單
     Example: 成功 - 依狀態篩選
       Given 使用者 "admin@pegatron.com" 已登入
       When 使用者發送 GET 請求至 "/api/admin/users":
-        | status | inactive |
+        | is_active | false |
       Then 請求應成功
       And 回傳結果應僅包含:
-        | email             | status   |
-        | carol@example.com | inactive |
+        | email             | is_active |
+        | carol@example.com | false     |
 
     Example: 成功 - 依關鍵字搜尋（Email 或名稱）
       Given 使用者 "admin@pegatron.com" 已登入
       When 使用者發送 GET 請求至 "/api/admin/users":
         | search | alice |
       Then 請求應成功
-      And 回傳結果應包含 email 或 name 含有 "alice" 的用戶
+      And 回傳結果應包含 email 或 full_name 含有 "alice" 的用戶
 
     Example: 成功 - 組合篩選條件
       Given 使用者 "admin@pegatron.com" 已登入
       When 使用者發送 GET 請求至 "/api/admin/users":
-        | role   | user   |
-        | status | active |
+        | role      | user |
+        | is_active | true |
       Then 請求應成功
-      And 回傳結果應僅包含角色為 user 且狀態為 active 的用戶:
+      And 回傳結果應僅包含角色為 user 且狀態為 active (true) 的用戶:
         | email             |
         | alice@example.com |
         | bob@example.com   |
@@ -137,9 +137,9 @@ Feature: 查詢全系統用戶清單
     Example: 成功 - 依名稱升序排序
       Given 使用者 "admin@pegatron.com" 已登入
       When 使用者發送 GET 請求至 "/api/admin/users":
-        | sort_by | name |
-        | order   | asc  |
-      Then 回傳結果應依 name 升序排列
+        | sort_by | full_name |
+        | order   | asc       |
+      Then 回傳結果應依 full_name 升序排列
       And 第一筆應為 "Alice Chen"
 
     Example: 成功 - 依最後登入時間排序
@@ -161,9 +161,9 @@ Feature: 查詢全系統用戶清單
         | field         | type     | description               |
         | id            | string   | 用戶 UUID                 |
         | email         | string   | 用戶 Email                |
-        | name          | string   | 用戶名稱                  |
+        | full_name     | string   | 用戶名稱                  |
         | role          | string   | 角色 (user/admin)         |
-        | status        | string   | 狀態 (active/inactive)    |
+        | is_active     | boolean  | 狀態 (true/false)         |
         | created_at    | datetime | 建立時間                  |
         | last_login_at | datetime | 最後登入時間（可為 null） |
         | agent_count   | number   | 該用戶擁有的 Agent 數量   |
@@ -172,10 +172,10 @@ Feature: 查詢全系統用戶清單
       Given 使用者 "admin@pegatron.com" 已登入
       When 使用者發送 GET 請求至 "/api/admin/users"
       Then 每筆用戶不應包含以下欄位:
-        | field         |
-        | password      |
-        | password_hash |
-        | refresh_token |
+        | field           |
+        | password        |
+        | hashed_password |
+        | refresh_token   |
   # ============================================================
   # Rule: 統計資訊
   # ============================================================

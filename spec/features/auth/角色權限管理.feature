@@ -26,9 +26,9 @@ Feature: 角色權限管理
       | user  | agent:create, agent:read, agent:update, agent:delete, model:read |
       | admin | (所有權限)                                                       |
     And 系統中存在以下用戶:
-      | id        | email             | role  | status |
-      | user-001  | user@example.com  | user  | active |
-      | admin-001 | admin@example.com | admin | active |
+      | id        | email             | role  | is_active |
+      | user-001  | user@example.com  | user  | true      |
+      | admin-001 | admin@example.com | admin | true      |
   # ============================================================
   # Rule: User 角色權限
   # ============================================================
@@ -133,11 +133,11 @@ Feature: 角色權限管理
     Example: Admin 可以管理 LLM 模型供應商
       Given 使用者 "admin@example.com" 已登入
       When 使用者發送 POST 請求至 "/api/admin/models":
-        | provider | openai   |
-        | api_key  | sk-xxxxx |
-        | enabled  | true     |
+        | provider  | openai   |
+        | api_key   | sk-xxxxx |
+        | is_active | true     |
       Then 請求應成功，回傳狀態碼 201
-      And model_providers 表應新增一筆記錄
+      And llm_models 表應新增一筆記錄
 
     Example: Admin 可以查看全系統用戶列表
       Given 使用者 "admin@example.com" 已登入

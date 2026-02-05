@@ -12,15 +12,15 @@ Feature: 建立初始管理員帳號
       And 環境變數未設定 INITIAL_ADMIN_PASSWORD
       When 系統啟動完成
       Then users 表應新增一筆記錄:
-        | field         | value                         |
-        | id            | (自動生成 UUID)               |
-        | email         | admin@pegatron.com            |
-        | name          | System Administrator          |
-        | role          | admin                         |
-        | status        | active                        |
-        | password_hash | (bcrypt 雜湊，明碼為 "admin") |
-        | created_at    | (當前時間)                    |
-        | created_by    | system                        |
+        | field           | value                         |
+        | id              | (自動生成 UUID)               |
+        | email           | admin@pegatron.com            |
+        | full_name       | System Administrator          |
+        | role            | admin                         |
+        | is_active       | true                          |
+        | hashed_password | (bcrypt 雜湊，明碼為 "admin") |
+        | created_at      | (當前時間)                    |
+        | created_by      | system                        |
       And 系統日誌應記錄:
         | level | message                                           |
         | INFO  | Initial admin account created: admin@pegatron.com |
@@ -37,11 +37,11 @@ Feature: 建立初始管理員帳號
         | INITIAL_ADMIN_NAME     | Super Admin       |
       When 系統啟動完成
       Then users 表應新增一筆記錄:
-        | field         | value                                  |
-        | email         | super@example.com                      |
-        | name          | Super Admin                            |
-        | role          | admin                                  |
-        | password_hash | (bcrypt 雜湊，可驗證 "SecurePass123!") |
+        | field           | value                                  |
+        | email           | super@example.com                      |
+        | full_name       | Super Admin                            |
+        | role            | admin                                  |
+        | hashed_password | (bcrypt 雜湊，可驗證 "SecurePass123!") |
       And 系統日誌應記錄:
         | level | message                                          |
         | INFO  | Initial admin account created: super@example.com |
@@ -55,9 +55,9 @@ Feature: 建立初始管理員帳號
       And 環境變數未設定 INITIAL_ADMIN_PASSWORD
       When 系統啟動完成
       Then users 表應新增一筆記錄:
-        | field         | value                         |
-        | email         | custom@example.com            |
-        | password_hash | (bcrypt 雜湊，明碼為 "admin") |
+        | field           | value                         |
+        | email           | custom@example.com            |
+        | hashed_password | (bcrypt 雜湊，明碼為 "admin") |
       And 系統日誌應記錄預設密碼警告
   # ============================================================
   # Rule: 已有帳號時不建立

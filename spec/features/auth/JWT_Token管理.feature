@@ -10,9 +10,9 @@ Feature: JWT Token 管理
       | refresh_token_ttl |              604800 (7天) |
       | issuer            | specular-ai               |
     And 系統中存在以下用戶:
-      | id       | email             | role  | status |
-      | user-001 | user@example.com  | user  | active |
-      | user-002 | admin@example.com | admin | active |
+      | id       | email             | role  | is_active |
+      | user-001 | user@example.com  | user  | true      |
+      | user-002 | admin@example.com | admin | true      |
   # ============================================================
   # Rule: Access Token 簽發
   # ============================================================
