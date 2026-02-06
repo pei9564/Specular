@@ -23,7 +23,8 @@ Feature: 查詢 Agent 列表
 
     Example: 成功 - 查詢所有可見 Agent
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表，不帶任何篩選條件
+      # API: GET /api/v1/agents
+      When 使用者發送 GET 請求至 "/api/v1/agents"，不帶任何篩選條件
       Then 請求應成功，回傳狀態碼 200
       And 回傳結果應包含:
         | id        | name    | model    | mode | capabilities      | status   |
@@ -36,7 +37,8 @@ Feature: 查詢 Agent 列表
 
     Example: 成功 - 管理員可見所有 Agent
       Given 使用者 "admin-001" 已登入
-      When 使用者查詢 Agent 列表
+      # API: GET /api/v1/agents
+      When 使用者發送 GET 請求至 "/api/v1/agents"
       Then 回傳結果應包含 6 筆 Agent
       And 應包含所有 private Agent
   # ============================================================
@@ -47,7 +49,8 @@ Feature: 查詢 Agent 列表
 
     Example: 成功 - 預設分頁（第一頁）
       Given 使用者 "admin-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?page=1&page_size=2
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | page      | 1 |
         | page_size | 2 |
       Then 請求應成功
@@ -58,7 +61,8 @@ Feature: 查詢 Agent 列表
 
     Example: 成功 - 查詢第二頁
       Given 使用者 "admin-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?page=2&page_size=2
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | page      | 2 |
         | page_size | 2 |
       Then 回傳的 data 應從第 3 筆 Agent 開始
@@ -66,7 +70,8 @@ Feature: 查詢 Agent 列表
 
     Example: 成功 - 查詢超出範圍的頁數
       Given 使用者 "admin-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?page=100&page_size=10
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | page      | 100 |
         | page_size |  10 |
       Then 請求應成功
@@ -74,7 +79,8 @@ Feature: 查詢 Agent 列表
       And total 應為 6
 
     Example: 失敗 - 無效的分頁參數
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?page=-1&page_size=0
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | page      | -1 |
         | page_size |  0 |
       Then 請求應失敗，回傳狀態碼 400
@@ -87,7 +93,8 @@ Feature: 查詢 Agent 列表
 
     Example: 成功 - 搜尋名稱包含關鍵字
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?search=Bot
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | search | Bot |
       Then 回傳結果應包含所有名稱含 "Bot" 的可見 Agent:
         | name    |
@@ -98,7 +105,8 @@ Feature: 查詢 Agent 列表
 
     Example: 成功 - 搜尋特定名稱
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?search=Code
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | search | Code |
       Then 回傳結果應僅包含:
         | name    |
@@ -106,7 +114,8 @@ Feature: 查詢 Agent 列表
 
     Example: 成功 - 無符合結果
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?search=NonExistent
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | search | NonExistent |
       Then 請求應成功
       And data 陣列應為空
@@ -114,7 +123,8 @@ Feature: 查詢 Agent 列表
 
     Example: 成功 - 搜尋不區分大小寫
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?search=mathbot
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | search | mathbot |
       Then 回傳結果應包含 "MathBot"
   # ============================================================
@@ -125,14 +135,16 @@ Feature: 查詢 Agent 列表
 
     Example: 成功 - 只查詢 active Agent
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?status=active
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | status | active |
       Then 回傳結果不應包含 status 為 "inactive" 的 Agent
       And 回傳結果不應包含 "OldBot"
 
     Example: 成功 - 只查詢 inactive Agent
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?status=inactive
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | status | inactive |
       Then 回傳結果應僅包含:
         | name   | status   |
@@ -140,7 +152,8 @@ Feature: 查詢 Agent 列表
 
     Example: 成功 - 查詢多種狀態
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?status=active,inactive
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | status | active,inactive |
       Then 回傳結果應包含 status 為 "active" 或 "inactive" 的 Agent
   # ============================================================
@@ -151,7 +164,8 @@ Feature: 查詢 Agent 列表
 
     Example: 一般使用者只能看見公開或自己的 Agent
       Given 使用者 "user-002" 已登入
-      When 使用者查詢 Agent 列表
+      # API: GET /api/v1/agents
+      When 使用者發送 GET 請求至 "/api/v1/agents"
       Then 回傳結果應包含:
         | name    | reason                   |
         | MathBot | public                   |
@@ -165,7 +179,8 @@ Feature: 查詢 Agent 列表
 
     Example: 使用 owner_id 篩選只看自己的 Agent
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?owner_id=user-001
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | owner_id | user-001 |
       Then 回傳結果應僅包含:
         | name    | owner_id |
@@ -175,7 +190,8 @@ Feature: 查詢 Agent 列表
 
     Example: 失敗 - 一般使用者無法查詢他人的 private Agent
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?owner_id=user-002
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | owner_id | user-002 |
       Then 回傳結果應僅包含 user-002 的公開 Agent:
         | name    |
@@ -189,12 +205,14 @@ Feature: 查詢 Agent 列表
 
     Example: 預設依建立時間降序
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表，不指定排序
+      # API: GET /api/v1/agents
+      When 使用者發送 GET 請求至 "/api/v1/agents"，不指定排序
       Then 回傳結果應依 created_at 降序排列
 
     Example: 依名稱升序排序
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?sort_by=name&order=asc
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | sort_by | name |
         | order   | asc  |
       Then 回傳結果第一筆應為 "ChatBot"
@@ -202,7 +220,8 @@ Feature: 查詢 Agent 列表
 
     Example: 依更新時間降序排序
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表:
+      # API: GET /api/v1/agents?sort_by=updated_at&order=desc
+      When 使用者發送 GET 請求至 "/api/v1/agents":
         | sort_by | updated_at |
         | order   | desc       |
       Then 回傳結果應依最近更新的 Agent 優先
@@ -214,7 +233,8 @@ Feature: 查詢 Agent 列表
 
     Example: 列表項目包含必要摘要欄位
       Given 使用者 "user-001" 已登入
-      When 使用者查詢 Agent 列表
+      # API: GET /api/v1/agents
+      When 使用者發送 GET 請求至 "/api/v1/agents"
       Then 每筆 Agent 應包含以下欄位:
         | field        | type     | description                 |
         | id           | string   | Agent UUID                  |

@@ -63,7 +63,7 @@ Feature: 觸發事件並調用 Runtime
   Rule: 收到 Webhook 請求時應觸發執行
 
     Example: 成功 - Webhook 觸發執行流程
-      Given 觸發器 "trg-002" 的 webhook_url 為 "https://api.specular.ai/webhooks/trg-002"
+      Given 觸發器 "trg-002" 的 webhook_url 為 "https://api.specular.ai/api/v1/webhooks/trg-002"
       When 外部系統發送 POST 請求至該 URL:
         | header           | value                                     |
         | X-Webhook-Secret | (正確的 secret)                           |

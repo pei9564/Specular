@@ -16,7 +16,8 @@ Feature: 創建 Agent
 
     Example: 成功創建 - 名稱唯一且格式正確
       Given 系統中不存在名為 "MathBot" 的 Agent
-      When 使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | field         | value            |
         | name          | MathBot          |
         | description   | 數學計算助手     |
@@ -38,7 +39,8 @@ Feature: 創建 Agent
       Given 系統中已存在 Agent:
         | id        | name    | owner_id |
         | agent-001 | MathBot | user-002 |
-      When 使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | field | value   |
         | name  | MathBot |
       Then 請求應失敗，回傳狀態碼 409
@@ -46,14 +48,16 @@ Feature: 創建 Agent
       And 資料庫 Agent 記錄數量應維持不變
 
     Example: 失敗 - 名稱格式不符（含特殊字元）
-      When 使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | field | value      |
         | name  | Math@Bot#1 |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Agent name can only contain alphanumeric characters, hyphens, and underscores"
 
     Example: 失敗 - 名稱過長（超過 64 字元）
-      When 使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | field | value                                                                  |
         | name  | ThisIsAVeryLongAgentNameThatExceedsTheMaximumAllowedLengthOfCharacters |
       Then 請求應失敗，回傳狀態碼 400
@@ -65,7 +69,8 @@ Feature: 創建 Agent
   Rule: 必須指定有效且可用的 LLM 模型
 
     Example: 成功 - 指定有效模型
-      When 使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | field    | value  |
         | name     | MyBot  |
         | model_id | gpt-4o |
@@ -78,7 +83,8 @@ Feature: 創建 Agent
         | max_tokens  |   4096 |
 
     Example: 失敗 - 模型 ID 不存在
-      When 使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | field    | value        |
         | name     | MyBot        |
         | model_id | non-existent |
@@ -86,7 +92,8 @@ Feature: 創建 Agent
       And 錯誤訊息應為 "Model 'non-existent' not found"
 
     Example: 失敗 - 模型已棄用
-      When 使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | field    | value   |
         | name     | MyBot   |
         | model_id | gpt-3.5 |
@@ -94,7 +101,8 @@ Feature: 創建 Agent
       And 錯誤訊息應為 "Model 'gpt-3.5' is deprecated and cannot be used for new agents"
 
     Example: 成功 - 自訂模型參數
-      When 使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | field       | value  |
         | name        | MyBot  |
         | model_id    | gpt-4o |
@@ -107,7 +115,8 @@ Feature: 創建 Agent
         | max_tokens  |  2048 |
 
     Example: 失敗 - temperature 超出範圍
-      When 使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | field       | value |
         | name        | MyBot |
         | temperature |   2.5 |
@@ -120,7 +129,8 @@ Feature: 創建 Agent
   Rule: Memory 配置決定對話歷史的儲存方式
 
     Example: 預設使用 in_memory 記憶
-      When 使用者提交創建請求，未指定 memory_config:
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents"，未指定 memory_config:
         | field | value |
         | name  | MyBot |
       Then 請求應成功
@@ -129,7 +139,8 @@ Feature: 創建 Agent
         | type  | in_memory |
 
     Example: 成功 - 啟用 database 持久化記憶
-      When 使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | field              | value    |
         | name               | MyBot    |
         | memory_config.type | database |
@@ -141,7 +152,8 @@ Feature: 創建 Agent
       And 系統應建立對應的 conversation_history 資料表分區
 
     Example: 成功 - 設定記憶視窗大小
-      When 使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | field                     | value    |
         | name                      | MyBot    |
         | memory_config.type        | database |
@@ -156,7 +168,8 @@ Feature: 創建 Agent
 
     Example: 失敗 - 無創建權限
       Given 使用者 "guest-001" 已登入但無 "create:agent" 權限
-      When 該使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 該使用者發送 POST 請求至 "/api/v1/agents":
         | field | value |
         | name  | MyBot |
       Then 請求應失敗，回傳狀態碼 403
@@ -165,7 +178,8 @@ Feature: 創建 Agent
     Example: 失敗 - 超過配額限制
       Given 使用者 "user-001" 的 Agent 配額為 5
       And 該使用者已建立 5 個 Agent
-      When 該使用者提交創建請求:
+      # API: POST /api/v1/agents
+      When 該使用者發送 POST 請求至 "/api/v1/agents":
         | field | value  |
         | name  | NewBot |
       Then 請求應失敗，回傳狀態碼 429

@@ -22,7 +22,8 @@ Feature: 查詢會話歷史訊息
   Rule: 用戶可以查詢自己會話的歷史訊息
 
     Example: 成功 - 查詢所有訊息
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001/messages"
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001"
       Then 請求應成功，回傳狀態碼 200
       And 回傳結果應包含:
         | field | value |
@@ -37,7 +38,8 @@ Feature: 查詢會話歷史訊息
         | tool_calls | array    | 工具調用記錄（可為空） |
 
     Example: 成功 - 訊息區分角色
-      When 使用者查詢會話 "conv-001" 的訊息
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001"
       Then 回傳的訊息中:
         | index | role      | content                    |
         |     0 | user      | 你好                       |
@@ -46,7 +48,8 @@ Feature: 查詢會話歷史訊息
         |     3 | assistant | 計算結果是 2               |
 
     Example: 成功 - 包含工具調用詳情
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001/messages":
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | include_tool_calls | true |
       Then 訊息 "m-04" 應包含 tool_calls 陣列:
         | tool_name | input                 | output        | status  |
@@ -58,7 +61,8 @@ Feature: 查詢會話歷史訊息
   Rule: 訊息列表支援分頁
 
     Example: 成功 - 分頁查詢
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001/messages":
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | page      | 1 |
         | page_size | 2 |
       Then 請求應成功
@@ -70,14 +74,16 @@ Feature: 查詢會話歷史訊息
       And data 陣列應包含 2 筆訊息（m-01, m-02）
 
     Example: 成功 - 查詢最新訊息（倒序分頁）
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001/messages":
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | page      |    1 |
         | page_size |    2 |
         | order     | desc |
       Then data 陣列應包含最新的 2 筆訊息（m-06, m-05）
 
     Example: 成功 - 使用 cursor 分頁（適合無限滾動）
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001/messages":
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | cursor    | m-04   |
         | limit     |     10 |
         | direction | before |
@@ -90,7 +96,8 @@ Feature: 查詢會話歷史訊息
   Rule: 支援依時間範圍篩選訊息
 
     Example: 成功 - 查詢特定時間後的訊息
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001/messages":
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | after | 2024-01-15T10:01:00Z |
       Then 回傳結果應只包含 created_at 在指定時間之後的訊息:
         | id   |
@@ -99,7 +106,8 @@ Feature: 查詢會話歷史訊息
         | m-06 |
 
     Example: 成功 - 查詢特定時間範圍的訊息
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001/messages":
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | after  | 2024-01-15T10:00:30Z |
         | before | 2024-01-15T10:01:30Z |
       Then 回傳結果應只包含:
@@ -113,12 +121,14 @@ Feature: 查詢會話歷史訊息
   Rule: 用戶只能查詢自己的會話訊息
 
     Example: 失敗 - 查詢他人會話的訊息
-      When 使用者 "user-001" 發送 GET 請求至 "/api/conversations/conv-002/messages"
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者 "user-001" 發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-002"
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You do not have permission to access this conversation"
 
     Example: 失敗 - 會話不存在
-      When 使用者發送 GET 請求至 "/api/conversations/non-existent/messages"
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/non-existent"
       Then 請求應失敗，回傳狀態碼 404
       And 錯誤訊息應為 "Conversation not found"
   # ============================================================
@@ -128,7 +138,8 @@ Feature: 查詢會話歷史訊息
   Rule: 支援在會話中搜尋訊息
 
     Example: 成功 - 關鍵字搜尋
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001/messages":
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | search | 計算 |
       Then 回傳結果應只包含 content 含有 "計算" 的訊息:
         | id   | content      |
@@ -136,7 +147,8 @@ Feature: 查詢會話歷史訊息
         | m-04 | 計算結果是 2 |
 
     Example: 成功 - 依角色篩選
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001/messages":
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | role | user |
       Then 回傳結果應只包含 role 為 "user" 的訊息
       And total 應為 3
@@ -165,7 +177,8 @@ Feature: 查詢會話歷史訊息
 
     Example: 包含 Markdown 的訊息
       Given 訊息 "m-07" 的 content 為 "# 標題\n- 項目1\n- 項目2"
-      When 使用者查詢訊息
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001"
       Then 訊息 "m-07" 應保留原始 Markdown 格式
       And content_type 應為 "markdown"
 
@@ -179,13 +192,15 @@ Feature: 查詢會話歷史訊息
   Rule: 大量訊息查詢應有效能保護
 
     Example: 限制單次查詢數量
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001/messages":
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | page_size | 500 |
       Then page_size 應被限制為最大值 100
       And data 陣列最多包含 100 筆訊息
 
     Example: 訊息內容截斷預覽
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001/messages":
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | preview_only | true |
       Then 每筆訊息的 content 應截斷至 200 字元
       And 超過 200 字元的訊息應標示 "truncated": true

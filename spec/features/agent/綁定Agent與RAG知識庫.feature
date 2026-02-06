@@ -19,14 +19,15 @@ Feature: 綁定 Agent 與 RAG 知識庫
   # Rule: 建立綁定關係
   # ============================================================
 
+  # [NOTE] 綁定 API 在 spec.md 5.1 中是透過 PUT /api/v1/agents/{id} 更新 rag_collection_id 欄位實現
   Rule: 使用者可以將 RAG 知識庫綁定到自己的 Agent
 
     Example: 成功 - 綁定單一知識庫
       Given Agent "agent-001" 尚未綁定任何 RAG 知識庫
       And agent_rag_bindings 表中無 agent_id 為 "agent-001" 的記錄
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-001 |
-        | rag_ids  | rag-001   |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | rag_collection_id | rag-001 |
       Then 請求應成功，回傳狀態碼 201
       And agent_rag_bindings 表應新增一筆記錄:
         | agent_id  | rag_id  | created_at | retrieval_config               |
@@ -42,44 +43,44 @@ Feature: 綁定 Agent 與 RAG 知識庫
       And Agent 檢索時應合併多個知識庫的結果
 
     Example: 成功 - 綁定公開的知識庫（非自己擁有）
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-001 |
-        | rag_ids  | rag-003   |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | rag_collection_id | rag-003 |
       Then 請求應成功
       And Agent "agent-001" 應能檢索 LegalDocs 的內容
 
     Example: 失敗 - 無法綁定 private 知識庫（非擁有者）
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-001 |
-        | rag_ids  | rag-006   |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | rag_collection_id | rag-006 |
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "RAG knowledge base 'PrivateData' is private and not accessible"
 
     Example: 失敗 - 無法綁定尚在處理中的知識庫
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-001 |
-        | rag_ids  | rag-004   |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | rag_collection_id | rag-004 |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "RAG knowledge base 'Processing' is not ready (status: processing)"
 
     Example: 失敗 - 無法綁定處理失敗的知識庫
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-001 |
-        | rag_ids  | rag-005   |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | rag_collection_id | rag-005 |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "RAG knowledge base 'FailedImport' is not ready (status: error)"
 
     Example: 失敗 - 知識庫不存在
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-001        |
-        | rag_ids  | non-existent-rag |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | rag_collection_id | non-existent-rag |
       Then 請求應失敗，回傳狀態碼 404
       And 錯誤訊息應為 "RAG knowledge base 'non-existent-rag' not found"
 
     Example: 失敗 - 非 Agent 擁有者無法綁定
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-002 |
-        | rag_ids  | rag-001   |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-002":
+        | rag_collection_id | rag-001 |
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You do not have permission to modify this agent"
   # ============================================================
@@ -167,7 +168,8 @@ Feature: 綁定 Agent 與 RAG 知識庫
         | rag_id  | bound_at            | retrieval_config                |
         | rag-001 | 2024-01-01 10:00:00 | {"top_k": 5, "threshold": 0.7}  |
         | rag-002 | 2024-01-02 15:30:00 | {"top_k": 10, "threshold": 0.8} |
-      When 使用者 "user-001" 查詢 Agent "agent-001" 的 RAG 綁定
+      # API: GET /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 GET 請求至 "/api/v1/agents/agent-001"
       Then 請求應成功
       And 回傳結果應包含:
         | rag_id  | name        | doc_count | chunk_count | top_k | threshold | bound_at            |

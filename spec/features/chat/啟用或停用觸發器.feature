@@ -20,7 +20,8 @@ Feature: 啟用或停用觸發器
 
     Example: 成功 - 停用排程觸發器
       Given 觸發器 "trg-001" 的 status 為 "active"
-      When 使用者發送 PATCH 請求至 "/api/triggers/trg-001":
+      # API: PATCH /api/v1/agents/{id}/triggers/{trigger_id}
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/trg-001":
         | status | paused |
       Then 請求應成功，回傳狀態碼 200
       And triggers 表中 trg-001 應更新:
@@ -45,7 +46,8 @@ Feature: 啟用或停用觸發器
 
     Example: 成功 - 停用 Webhook 觸發器
       Given 觸發器 "trg-002" 為 Webhook 類型，status 為 "active"
-      When 使用者發送 PATCH 請求至 "/api/triggers/trg-002":
+      # API: PATCH /api/v1/agents/{id}/triggers/{trigger_id}
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/trg-002":
         | status | paused |
       Then 請求應成功
       And triggers 表中 trg-002 的 status 應為 "paused"
@@ -64,7 +66,8 @@ Feature: 啟用或停用觸發器
     Example: 成功 - 重新啟用排程觸發器
       Given 觸發器 "trg-003" 的 status 為 "paused"
       And 觸發器 "trg-003" 的 cron 為 "0 0 * * 0"（每週日）
-      When 使用者發送 PATCH 請求至 "/api/triggers/trg-003":
+      # API: PATCH /api/v1/agents/{id}/triggers/{trigger_id}
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/trg-003":
         | status | active |
       Then 請求應成功，回傳狀態碼 200
       And triggers 表中 trg-003 應更新:
@@ -80,14 +83,16 @@ Feature: 啟用或停用觸發器
 
     Example: 成功 - 重新啟用 Webhook 觸發器
       Given 觸發器 "trg-002" 的 status 為 "paused"
-      When 使用者發送 PATCH 請求至 "/api/triggers/trg-002":
+      # API: PATCH /api/v1/agents/{id}/triggers/{trigger_id}
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/trg-002":
         | status | active |
       Then 請求應成功
       And 觸發器應能正常接收 webhook 請求
 
     Example: 啟用後立即執行一次（可選）
       Given 觸發器 "trg-003" 的 status 為 "paused"
-      When 使用者發送 PATCH 請求至 "/api/triggers/trg-003":
+      # API: PATCH /api/v1/agents/{id}/triggers/{trigger_id}
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/trg-003":
         | status  | active |
         | run_now | true   |
       Then 觸發器應立即執行一次
@@ -102,7 +107,8 @@ Feature: 啟用或停用觸發器
   Rule: 支援批次啟用或停用多個觸發器
 
     Example: 成功 - 批次停用
-      When 使用者發送 PATCH 請求至 "/api/triggers/batch":
+      # API: PATCH /api/v1/agents/{id}/triggers/batch
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/batch":
         | ids    | ["trg-001", "trg-002"] |
         | status | paused                 |
       Then 請求應成功
@@ -112,7 +118,8 @@ Feature: 啟用或停用觸發器
         | updated_count |     2 |
 
     Example: 成功 - 停用 Agent 的所有觸發器
-      When 使用者發送 PATCH 請求至 "/api/agents/agent-001/triggers/batch":
+      # API: PATCH /api/v1/agents/{id}/triggers/batch
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/batch":
         | status | paused |
       Then Agent "agent-001" 的所有觸發器應被停用
       And 回傳應包含更新的觸發器數量
@@ -124,20 +131,23 @@ Feature: 啟用或停用觸發器
 
     Example: 失敗 - 變更他人的觸發器狀態
       Given Agent "agent-002" 有觸發器 "trg-other"
-      When 使用者 "user-001" 發送 PATCH 請求至 "/api/triggers/trg-other":
+      # API: PATCH /api/v1/agents/{id}/triggers/{trigger_id}
+      When 使用者 "user-001" 發送 PATCH 請求至 "/api/v1/agents/agent-002/triggers/trg-other":
         | status | paused |
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You do not have permission to modify this trigger"
 
     Example: 失敗 - 觸發器不存在
-      When 使用者發送 PATCH 請求至 "/api/triggers/non-existent":
+      # API: PATCH /api/v1/agents/{id}/triggers/{trigger_id}
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/non-existent":
         | status | paused |
       Then 請求應失敗，回傳狀態碼 404
       And 錯誤訊息應為 "Trigger not found"
 
     Example: 成功 - 管理員可變更任何觸發器
       Given 使用者 "admin@example.com" 已登入（角色為 admin）
-      When 使用者發送 PATCH 請求至 "/api/triggers/trg-001":
+      # API: PATCH /api/v1/agents/{id}/triggers/{trigger_id}
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/trg-001":
         | status | paused |
       Then 請求應成功
   # ============================================================
@@ -147,21 +157,24 @@ Feature: 啟用或停用觸發器
   Rule: 只允許有效的狀態轉換
 
     Example: 失敗 - 無效的狀態值
-      When 使用者發送 PATCH 請求至 "/api/triggers/trg-001":
+      # API: PATCH /api/v1/agents/{id}/triggers/{trigger_id}
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/trg-001":
         | status | invalid |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Invalid status. Allowed values: 'active', 'paused'"
 
     Example: 冪等性 - 重複設定相同狀態
       Given 觸發器 "trg-001" 的 status 已經是 "active"
-      When 使用者發送 PATCH 請求至 "/api/triggers/trg-001":
+      # API: PATCH /api/v1/agents/{id}/triggers/{trigger_id}
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/trg-001":
         | status | active |
       Then 請求應成功，回傳狀態碼 200
       And 回傳應標示 "no_change": true
 
     Example: 失敗 - 無法啟用錯誤狀態的觸發器
       Given 觸發器 "trg-001" 的 status 為 "error"
-      When 使用者發送 PATCH 請求至 "/api/triggers/trg-001":
+      # API: PATCH /api/v1/agents/{id}/triggers/{trigger_id}
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/trg-001":
         | status | active |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Cannot activate trigger in error state. Please fix the configuration first."
@@ -191,7 +204,8 @@ Feature: 啟用或停用觸發器
         | details   | {"previous_status": "paused", "next_run_at": "..."} |
 
     Example: 包含停用原因
-      When 使用者發送 PATCH 請求至 "/api/triggers/trg-001":
+      # API: PATCH /api/v1/agents/{id}/triggers/{trigger_id}
+      When 使用者發送 PATCH 請求至 "/api/v1/agents/agent-001/triggers/trg-001":
         | status | paused           |
         | reason | 維護中，暫時停用 |
       Then triggers 表應記錄 pause_reason

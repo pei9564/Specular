@@ -37,7 +37,8 @@ Feature: 角色權限管理
 
     Example: User 可以創建 Agent
       Given 使用者 "user@example.com" 已登入（角色為 user）
-      When 使用者發送 POST 請求至 "/api/agents":
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | name | MyAgent |
       Then 請求應成功，回傳狀態碼 201
       And 新建的 Agent 的 owner_id 應為 "user-001"
@@ -47,7 +48,8 @@ Feature: 角色權限管理
       And 系統中存在 Agent:
         | id        | name    | owner_id |
         | agent-001 | MyAgent | user-001 |
-      When 使用者發送 GET 請求至 "/api/agents/agent-001"
+      # API: GET /api/v1/agents/{id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001"
       Then 請求應成功
 
     Example: User 無法查看他人的 private Agent
@@ -55,7 +57,8 @@ Feature: 角色權限管理
       And 系統中存在 Agent:
         | id        | name       | owner_id  | visibility |
         | agent-002 | OtherAgent | admin-001 | private    |
-      When 使用者發送 GET 請求至 "/api/agents/agent-002"
+      # API: GET /api/v1/agents/{id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-002"
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You do not have permission to access this agent"
 
@@ -64,7 +67,8 @@ Feature: 角色權限管理
       And 系統中存在 Agent:
         | id        | owner_id |
         | agent-001 | user-001 |
-      When 使用者發送 PATCH 請求至 "/api/agents/agent-001":
+      # API: PUT /api/v1/agents/{id}
+      When 使用者發送 PUT 請求至 "/api/v1/agents/agent-001":
         | name | UpdatedName |
       Then 請求應成功
 
@@ -73,13 +77,15 @@ Feature: 角色權限管理
       And 系統中存在 Agent:
         | id        | owner_id  |
         | agent-002 | admin-001 |
-      When 使用者發送 PATCH 請求至 "/api/agents/agent-002":
+      # API: PUT /api/v1/agents/{id}
+      When 使用者發送 PUT 請求至 "/api/v1/agents/agent-002":
         | name | HackedName |
       Then 請求應失敗，回傳狀態碼 403
 
     Example: User 無法管理 LLM 模型供應商
       Given 使用者 "user@example.com" 已登入
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      # API: POST /api/v1/llm-models (Admin Only)
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider | openai   |
         | api_key  | sk-xxxxx |
       Then 請求應失敗，回傳狀態碼 403
@@ -87,19 +93,22 @@ Feature: 角色權限管理
 
     Example: User 可以查看可用的 LLM 模型列表
       Given 使用者 "user@example.com" 已登入
-      When 使用者發送 GET 請求至 "/api/models"
+      # API: GET /api/v1/llm-models
+      When 使用者發送 GET 請求至 "/api/v1/llm-models"
       Then 請求應成功
       And 回傳結果應僅包含公開的模型資訊（不含 API Key）
 
     Example: User 無法查看全系統用戶列表
       Given 使用者 "user@example.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users"
+      # API: GET /api/v1/users (Admin Only)
+      When 使用者發送 GET 請求至 "/api/v1/users"
       Then 請求應失敗，回傳狀態碼 403
 
-    Example: User 無法查看審計日誌
-      Given 使用者 "user@example.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/audit-logs"
-      Then 請求應失敗，回傳狀態碼 403
+    # [TODO] 審計日誌 API 未在 spec.md 5.1 中定義，請確認是否需要實作
+    # Example: User 無法查看審計日誌
+    #   Given 使用者 "user@example.com" 已登入
+    #   When 使用者發送 GET 請求至 "/api/admin/audit-logs"
+    #   Then 請求應失敗，回傳狀態碼 403
   # ============================================================
   # Rule: Admin 角色權限
   # ============================================================
@@ -108,7 +117,8 @@ Feature: 角色權限管理
 
     Example: Admin 可以使用所有 Agent 功能
       Given 使用者 "admin@example.com" 已登入（角色為 admin）
-      When 使用者發送 POST 請求至 "/api/agents":
+      # API: POST /api/v1/agents
+      When 使用者發送 POST 請求至 "/api/v1/agents":
         | name | AdminAgent |
       Then 請求應成功
 
@@ -117,7 +127,8 @@ Feature: 角色權限管理
       And 系統中存在 Agent:
         | id        | owner_id | visibility |
         | agent-001 | user-001 | private    |
-      When 使用者發送 GET 請求至 "/api/agents/agent-001"
+      # API: GET /api/v1/agents/{id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001"
       Then 請求應成功
 
     Example: Admin 可以編輯任何 Agent
@@ -125,14 +136,16 @@ Feature: 角色權限管理
       And 系統中存在 Agent:
         | id        | owner_id |
         | agent-001 | user-001 |
-      When 使用者發送 PATCH 請求至 "/api/agents/agent-001":
+      # API: PUT /api/v1/agents/{id}
+      When 使用者發送 PUT 請求至 "/api/v1/agents/agent-001":
         | name | AdminUpdated |
       Then 請求應成功
       And Agent 應被更新
 
     Example: Admin 可以管理 LLM 模型供應商
       Given 使用者 "admin@example.com" 已登入
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      # API: POST /api/v1/llm-models (Admin Only)
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider  | openai   |
         | api_key   | sk-xxxxx |
         | is_active | true     |
@@ -141,43 +154,47 @@ Feature: 角色權限管理
 
     Example: Admin 可以查看全系統用戶列表
       Given 使用者 "admin@example.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users"
+      # API: GET /api/v1/users (Admin Only)
+      When 使用者發送 GET 請求至 "/api/v1/users"
       Then 請求應成功
       And 回傳結果應包含所有用戶
 
-    Example: Admin 可以查看審計日誌
-      Given 使用者 "admin@example.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/audit-logs"
-      Then 請求應成功
+    # [TODO] 審計日誌 API 未在 spec.md 5.1 中定義，請確認是否需要實作
+    # Example: Admin 可以查看審計日誌
+    #   Given 使用者 "admin@example.com" 已登入
+    #   When 使用者發送 GET 請求至 "/api/admin/audit-logs"
+    #   Then 請求應成功
 
-    Example: Admin 可以修改系統設定
-      Given 使用者 "admin@example.com" 已登入
-      When 使用者發送 PUT 請求至 "/api/admin/settings":
-        | max_agents_per_user | 10 |
-      Then 請求應成功
+    # [TODO] 系統設定 API 未在 spec.md 5.1 中定義，請確認是否需要實作
+    # Example: Admin 可以修改系統設定
+    #   Given 使用者 "admin@example.com" 已登入
+    #   When 使用者發送 PUT 請求至 "/api/admin/settings":
+    #     | max_agents_per_user | 10 |
+    #   Then 請求應成功
   # ============================================================
   # Rule: 權限檢查 API
   # ============================================================
 
-  Rule: 提供 API 讓前端檢查用戶權限
-
-    Example: 查詢當前用戶權限
-      Given 使用者 "user@example.com" 已登入
-      When 使用者發送 GET 請求至 "/api/auth/permissions"
-      Then 請求應成功
-      And 回傳結果應包含:
-        | field       | value                                                                        |
-        | role        | user                                                                         |
-        | permissions | ["agent:create", "agent:read", "agent:update", "agent:delete", "model:read"] |
-
-    Example: 檢查特定權限
-      Given 使用者 "user@example.com" 已登入
-      When 使用者發送 GET 請求至 "/api/auth/permissions/check":
-        | permission | model:create |
-      Then 請求應成功
-      And 回傳結果應為:
-        | field   | value |
-        | allowed | false |
+  # [TODO] 權限檢查 API 未在 spec.md 5.1 中定義，請確認是否需要實作
+  # Rule: 提供 API 讓前端檢查用戶權限
+  #
+  #   Example: 查詢當前用戶權限
+  #     Given 使用者 "user@example.com" 已登入
+  #     When 使用者發送 GET 請求至 "/api/auth/permissions"
+  #     Then 請求應成功
+  #     And 回傳結果應包含:
+  #       | field       | value                                                                        |
+  #       | role        | user                                                                         |
+  #       | permissions | ["agent:create", "agent:read", "agent:update", "agent:delete", "model:read"] |
+  #
+  #   Example: 檢查特定權限
+  #     Given 使用者 "user@example.com" 已登入
+  #     When 使用者發送 GET 請求至 "/api/auth/permissions/check":
+  #       | permission | model:create |
+  #     Then 請求應成功
+  #     And 回傳結果應為:
+  #       | field   | value |
+  #       | allowed | false |
   # ============================================================
   # Rule: 權限繼承與覆寫
   # ============================================================
@@ -192,7 +209,8 @@ Feature: 角色權限管理
       And agent_shares 表中存在:
         | agent_id  | user_id  | permission |
         | agent-002 | user-001 | read       |
-      When 使用者發送 GET 請求至 "/api/agents/agent-002"
+      # API: GET /api/v1/agents/{id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-002"
       Then 請求應成功
       And 用戶應能查看該 Agent
 
@@ -201,7 +219,8 @@ Feature: 角色權限管理
       And agent_shares 表中存在:
         | agent_id  | user_id  | permission |
         | agent-002 | user-001 | read       |
-      When 使用者發送 PATCH 請求至 "/api/agents/agent-002":
+      # API: PUT /api/v1/agents/{id}
+      When 使用者發送 PUT 請求至 "/api/v1/agents/agent-002":
         | name | TryToUpdate |
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You only have read permission for this agent"
@@ -213,14 +232,14 @@ Feature: 角色權限管理
 
     Example: 記錄權限拒絕事件
       Given 使用者 "user@example.com" 已登入
-      When 使用者嘗試存取無權限的 API "/api/admin/users"
+      When 使用者嘗試存取無權限的 API "/api/v1/users"
       Then 請求應失敗
       And audit_logs 表應新增一筆記錄:
-        | field    | value                                                                    |
-        | action   | permission.denied                                                        |
-        | actor_id | user-001                                                                 |
-        | details  | {"resource": "/api/admin/users", "required_permission": "user:read:all"} |
-        | status   | denied                                                                   |
+        | field    | value                                                                |
+        | action   | permission.denied                                                    |
+        | actor_id | user-001                                                             |
+        | details  | {"resource": "/api/v1/users", "required_permission": "user:read:all"}|
+        | status   | denied                                                               |
 
     Example: 記錄 Admin 越權操作
       Given 使用者 "admin@example.com" 已登入
@@ -241,19 +260,16 @@ Feature: 角色權限管理
 
     Example: 完整權限矩陣
       Then 系統權限矩陣應為:
-        | API Endpoint          | Method | user       | admin |
-        | /api/agents           | GET    | ✓          | ✓     |
-        | /api/agents           | POST   | ✓          | ✓     |
-        | /api/agents/:id       | GET    | own/public | ✓     |
-        | /api/agents/:id       | PATCH  | own        | ✓     |
-        | /api/agents/:id       | DELETE | own        | ✓     |
-        | /api/models           | GET    | ✓          | ✓     |
-        | /api/admin/models     | GET    | ✗          | ✓     |
-        | /api/admin/models     | POST   | ✗          | ✓     |
-        | /api/admin/models/:id | PATCH  | ✗          | ✓     |
-        | /api/admin/models/:id | DELETE | ✗          | ✓     |
-        | /api/admin/users      | GET    | ✗          | ✓     |
-        | /api/admin/users/:id  | PATCH  | ✗          | ✓     |
-        | /api/admin/audit-logs | GET    | ✗          | ✓     |
-        | /api/admin/settings   | GET    | ✗          | ✓     |
-        | /api/admin/settings   | PUT    | ✗          | ✓     |
+        | API Endpoint              | Method | user       | admin |
+        | /api/v1/agents            | GET    | ✓          | ✓     |
+        | /api/v1/agents            | POST   | ✓          | ✓     |
+        | /api/v1/agents/:id        | GET    | own/public | ✓     |
+        | /api/v1/agents/:id        | PUT    | own        | ✓     |
+        | /api/v1/agents/:id        | DELETE | own        | ✓     |
+        | /api/v1/llm-models        | GET    | ✓          | ✓     |
+        | /api/v1/llm-models        | POST   | ✗          | ✓     |
+        | /api/v1/llm-models/:id    | PUT    | ✗          | ✓     |
+        | /api/v1/llm-models/:id    | DELETE | ✗          | ✓     |
+        | /api/v1/users             | GET    | ✗          | ✓     |
+        | /api/v1/users/:id/role    | PUT    | ✗          | ✓     |
+        | /api/v1/users/:id/status  | PUT    | ✗          | ✓     |

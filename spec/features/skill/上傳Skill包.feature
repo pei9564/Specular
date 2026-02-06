@@ -22,11 +22,12 @@ Feature: 上傳 Skill 包
 
     Example: 成功 - 上傳合法的 Skill ZIP
       Given 用戶準備了 ZIP 檔案 "calculator.zip" 包含:
-        | file         | content                                      |
-        | SKILL.md     | # Calculator\n計算工具                       |
-        | __init__.py  | from .functions import *                     |
-        | functions.py | def calculate(expression: str) -> float: ... |
-      When 使用者發送 POST 請求至 "/api/skills/upload":
+        | file         | content                                                                                         |
+        | SKILL.md     | # Calculator\n計算工具                                                                          |
+        | __init__.py  | from .functions import *                                                                        |
+        | functions.py | from agentscope.tool import ToolResponse\n\ndef calculate(expression: str) -> ToolResponse: ... |
+      # API: POST /api/v1/skills (multipart/form-data)
+      When 使用者發送 POST 請求至 "/api/v1/skills":
         | file | (calculator.zip binary) |
       Then 請求應成功，回傳狀態碼 201
       And skills 表應新增一筆記錄:
@@ -45,25 +46,29 @@ Feature: 上傳 Skill 包
         | skill_id          | (新 Skill ID)                      |
         | function_name     | calculate                          |
         | parameters_schema | {"expression": {"type": "string"}} |
-        | return_type       | float                              |
+        | return_type       | ToolResponse                       |
       And Skill 檔案應儲存至 "/skills/{skill_id}/" 目錄
 
     Example: 成功 - 解析多個工具函數
       Given ZIP 檔案的 functions.py 包含多個函數:
         """python
-        def add(a: int, b: int) -> int:
-            '''加法運算'''
-            return a + b
+        from agentscope.tool import ToolResponse
+        from agentscope.message import TextBlock
         
-        def subtract(a: int, b: int) -> int:
+        def add(a: int, b: int) -> ToolResponse:
+            '''加法運算'''
+            return ToolResponse(content=[TextBlock(type="text", text=str(a + b))])
+        
+        def subtract(a: int, b: int) -> ToolResponse:
             '''減法運算'''
-            return a - b
+            return ToolResponse(content=[TextBlock(type="text", text=str(a - b))])
         
         def _private_helper():
             '''私有函數，不應被解析'''
             pass
         """
-      When 使用者上傳該 ZIP
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳該 ZIP
       Then skill_functions 表應新增 2 筆記錄（排除以 _ 開頭的私有函數）:
         | function_name | description |
         | add           | 加法運算    |
@@ -72,15 +77,18 @@ Feature: 上傳 Skill 包
     Example: 成功 - 自動生成 JSON Schema
       Given functions.py 包含帶有類型標註的函數:
         """python
+        from agentscope.tool import ToolResponse
+        
         def search(
             query: str,
             limit: int = 10,
             filters: dict = None
-        ) -> list[dict]:
+        ) -> ToolResponse:
             '''搜尋功能'''
             pass
         """
-      When 使用者上傳該 ZIP
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳該 ZIP
       Then skill_functions 記錄的 parameters_schema 應為:
         """json
         {
@@ -100,7 +108,8 @@ Feature: 上傳 Skill 包
         requests>=2.28.0
         pandas>=2.0.0
         """
-      When 使用者上傳該 ZIP
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳該 ZIP
       Then skills 記錄的 dependencies 應為:
         | package  | version  |
         | requests | >=2.28.0 |
@@ -113,30 +122,35 @@ Feature: 上傳 Skill 包
 
     Example: 失敗 - 缺少 SKILL.md
       Given ZIP 檔案缺少 SKILL.md
-      When 使用者上傳該 ZIP
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳該 ZIP
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Missing required file: SKILL.md"
 
     Example: 失敗 - 缺少 functions.py
       Given ZIP 檔案缺少 functions.py
-      When 使用者上傳該 ZIP
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳該 ZIP
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Missing required file: functions.py"
 
     Example: 失敗 - 缺少 __init__.py
       Given ZIP 檔案缺少 __init__.py
-      When 使用者上傳該 ZIP
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳該 ZIP
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Missing required file: __init__.py"
 
     Example: 失敗 - 不是有效的 ZIP 檔案
-      When 使用者上傳一個非 ZIP 格式的檔案
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳一個非 ZIP 格式的檔案
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Invalid file format. Expected ZIP archive."
 
     Example: 失敗 - ZIP 檔案過大
       Given ZIP 檔案大小超過 50MB
-      When 使用者上傳該 ZIP
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳該 ZIP
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "File size exceeds maximum limit (50MB)"
   # ============================================================
@@ -151,7 +165,8 @@ Feature: 上傳 Skill 包
         def broken_function(
             # 缺少閉合括號
         """
-      When 使用者上傳該 ZIP
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳該 ZIP
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應包含 "Syntax error in functions.py"
 
@@ -161,7 +176,8 @@ Feature: 上傳 Skill 包
         def _helper():
             pass
         """
-      When 使用者上傳該 ZIP
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳該 ZIP
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "No public functions found in functions.py"
 
@@ -171,7 +187,8 @@ Feature: 上傳 Skill 包
         def process(data):
             return data
         """
-      When 使用者上傳該 ZIP
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳該 ZIP
       Then 請求應成功
       And 回傳應包含警告:
         | warning | Function 'process' is missing type annotations. Schema will use 'any' type. |
@@ -185,7 +202,8 @@ Feature: 上傳 Skill 包
         def dangerous():
             subprocess.run(['rm', '-rf', '/'])
         """
-      When 使用者上傳該 ZIP
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳該 ZIP
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Forbidden imports detected: os, subprocess"
   # ============================================================
@@ -196,7 +214,8 @@ Feature: 上傳 Skill 包
 
     Example: 成功 - 上傳新版本
       Given 系統中已存在 Skill "calculator" 版本 "1.0.0"，owner 為 user-001
-      When 使用者上傳新版本的 calculator.zip:
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳新版本的 calculator.zip:
         | config.version | 1.1.0 |
       Then 請求應成功
       And skills 表應新增一筆新記錄:
@@ -207,13 +226,15 @@ Feature: 上傳 Skill 包
 
     Example: 失敗 - 版本號未遞增
       Given 系統中已存在 Skill "calculator" 版本 "1.0.0"
-      When 使用者上傳版本號為 "0.9.0" 的 calculator.zip
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳版本號為 "0.9.0" 的 calculator.zip
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Version '0.9.0' must be greater than current version '1.0.0'"
 
     Example: 失敗 - 非擁有者無法更新
       Given Skill "calculator" 的 owner 為 user-002
-      When 使用者 "user-001" 上傳 calculator.zip 新版本
+      # API: POST /api/v1/skills
+      When 使用者 "user-001" 發送 POST 請求至 "/api/v1/skills" 上傳 calculator.zip 新版本
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You do not have permission to update this skill"
   # ============================================================
@@ -224,13 +245,15 @@ Feature: 上傳 Skill 包
 
     Example: 失敗 - 名稱已存在（同一用戶）
       Given 使用者 "user-001" 已有 Skill 名稱為 "calculator"
-      When 使用者上傳另一個名為 "calculator" 的新 Skill
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳另一個名為 "calculator" 的新 Skill
       Then 請求應失敗，回傳狀態碼 409
       And 錯誤訊息應為 "A skill named 'calculator' already exists. Use version update to modify existing skill."
 
     Example: 成功 - 不同用戶可有相同名稱
       Given 使用者 "user-002" 已有 Skill 名稱為 "calculator"
-      When 使用者 "user-001" 上傳名為 "calculator" 的 Skill
+      # API: POST /api/v1/skills
+      When 使用者 "user-001" 發送 POST 請求至 "/api/v1/skills" 上傳名為 "calculator" 的 Skill
       Then 請求應成功
       And 系統中應有兩個不同 owner 的 "calculator" Skill
   # ============================================================
@@ -241,7 +264,8 @@ Feature: 上傳 Skill 包
 
     Example: 失敗 - 超過 Skill 數量上限
       Given 使用者 "user-001" 已上傳 20 個 Skill（達到上限）
-      When 使用者上傳新的 Skill
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳新的 Skill
       Then 請求應失敗，回傳狀態碼 429
       And 錯誤訊息應為 "Skill quota exceeded. Maximum: 20 skills per user."
   # ============================================================
@@ -251,7 +275,8 @@ Feature: 上傳 Skill 包
   Rule: 上傳操作應記錄審計日誌
 
     Example: 記錄上傳操作
-      When 使用者上傳 Skill
+      # API: POST /api/v1/skills
+      When 使用者發送 POST 請求至 "/api/v1/skills" 上傳 Skill
       Then audit_logs 表應新增一筆記錄:
         | field       | value                                                            |
         | action      | skill.upload                                                     |

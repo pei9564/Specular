@@ -17,9 +17,12 @@ Feature: 登入系統
 
     Example: 成功 - 一般用戶登入
       Given 用戶 "active@example.com" 的密碼為 "Password123!"
-      When 用戶發送 POST 請求至 "/auth/token":
+      # API: POST /api/v1/auth/login (OAuth2 Password Flow)
+      # Content-Type: application/x-www-form-urlencoded
+      # Body: username=active@example.com&password=Password123!
+      When 用戶發送 POST 請求至 "/api/v1/auth/login":
         | field    | value              |
-        | email    | active@example.com |
+        | username | active@example.com |
         | password | Password123!       |
       Then 請求應成功，回傳狀態碼 200
       And 回傳結果應包含:
@@ -41,8 +44,9 @@ Feature: 登入系統
         | expires_at | (24小時後)        |
 
     Example: 成功 - 管理員登入
-      When 用戶發送 POST 請求至 "/auth/token":
-        | email    | admin@example.com |
+      # API: POST /api/v1/auth/login
+      When 用戶發送 POST 請求至 "/api/v1/auth/login":
+        | username | admin@example.com |
         | password | Password123!      |
       Then 請求應成功
       And 回傳的 access_token 解碼後應包含:
@@ -52,8 +56,9 @@ Feature: 登入系統
         | role  | admin             |
 
     Example: 成功 - Email 大小寫不敏感
-      When 用戶發送 POST 請求至 "/auth/token":
-        | email    | ACTIVE@EXAMPLE.COM |
+      # API: POST /api/v1/auth/login
+      When 用戶發送 POST 請求至 "/api/v1/auth/login":
+        | username | ACTIVE@EXAMPLE.COM |
         | password | Password123!       |
       Then 請求應成功
       And 回傳 access_token 應為有效 JWT
@@ -64,24 +69,27 @@ Feature: 登入系統
   Rule: 登入失敗時應回傳統一錯誤訊息以防止帳號枚舉攻擊
 
     Example: 失敗 - 密碼錯誤
-      When 用戶發送 POST 請求至 "/auth/token":
-        | email    | active@example.com |
+      # API: POST /api/v1/auth/login
+      When 用戶發送 POST 請求至 "/api/v1/auth/login":
+        | username | active@example.com |
         | password | WrongPassword      |
       Then 請求應失敗，回傳狀態碼 401
       And 錯誤訊息應為 "Incorrect email or password"
       And users 表中 user-001 的 failed_login_count 應增加 1
 
     Example: 失敗 - Email 不存在
-      When 用戶發送 POST 請求至 "/auth/token":
-        | email    | nonexistent@example.com |
+      # API: POST /api/v1/auth/login
+      When 用戶發送 POST 請求至 "/api/v1/auth/login":
+        | username | nonexistent@example.com |
         | password | AnyPassword123          |
       Then 請求應失敗，回傳狀態碼 401
       And 錯誤訊息應為 "Incorrect email or password"
       And 錯誤訊息不應透露帳號不存在
 
     Example: 失敗 - Email 格式無效
-      When 用戶發送 POST 請求至 "/auth/token":
-        | email    | invalid-email |
+      # API: POST /api/v1/auth/login
+      When 用戶發送 POST 請求至 "/api/v1/auth/login":
+        | username | invalid-email |
         | password | Password123!  |
       Then 請求應失敗，回傳狀態碼 401
       And 錯誤訊息應為 "Incorrect email or password"
@@ -93,16 +101,18 @@ Feature: 登入系統
 
     Example: 失敗 - 帳號已停用
       Given 用戶 "inactive@example.com" 的 is_active 為 false
-      When 用戶發送 POST 請求至 "/auth/token":
-        | email    | inactive@example.com |
+      # API: POST /api/v1/auth/login
+      When 用戶發送 POST 請求至 "/api/v1/auth/login":
+        | username | inactive@example.com |
         | password | Password123!         |
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "Account is deactivated. Please contact support."
 
     Example: 失敗 - 帳號已鎖定
       Given 用戶 "locked@example.com" 的 locked_until 為未來時間
-      When 用戶發送 POST 請求至 "/auth/token":
-        | email    | locked@example.com |
+      # API: POST /api/v1/auth/login
+      When 用戶發送 POST 請求至 "/api/v1/auth/login":
+        | username | locked@example.com |
         | password | Password123!       |
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "Account is locked due to too many failed login attempts. Please try again later."
@@ -115,8 +125,9 @@ Feature: 登入系統
 
     Example: 連續失敗 5 次後鎖定帳號
       Given 用戶 "active@example.com" 的 failed_login_count 為 4
-      When 用戶發送 POST 請求至 "/auth/token":
-        | email    | active@example.com |
+      # API: POST /api/v1/auth/login
+      When 用戶發送 POST 請求至 "/api/v1/auth/login":
+        | username | active@example.com |
         | password | WrongPassword      |
       Then 請求應失敗，回傳狀態碼 401
       And users 表中 user-001 應更新:
@@ -127,16 +138,18 @@ Feature: 登入系統
 
     Example: 成功登入後重置失敗計數
       Given 用戶 "active@example.com" 的 failed_login_count 為 3
-      When 用戶發送 POST 請求至 "/auth/token":
-        | email    | active@example.com |
+      # API: POST /api/v1/auth/login
+      When 用戶發送 POST 請求至 "/api/v1/auth/login":
+        | username | active@example.com |
         | password | Password123!       |
       Then 請求應成功
       And users 表中 user-001 的 failed_login_count 應重置為 0
 
     Example: 鎖定時間到期後可重新登入
       Given 用戶 "locked@example.com" 的 locked_until 已過期（過去時間）
-      When 用戶發送 POST 請求至 "/auth/token":
-        | email    | locked@example.com |
+      # API: POST /api/v1/auth/login
+      When 用戶發送 POST 請求至 "/api/v1/auth/login":
+        | username | locked@example.com |
         | password | Password123!       |
       Then 請求應成功
       And users 表中該用戶的 locked_until 應設為 null

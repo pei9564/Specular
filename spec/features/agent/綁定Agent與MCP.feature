@@ -18,14 +18,15 @@ Feature: 綁定 Agent 與 MCP
   # Rule: 建立綁定關係
   # ============================================================
 
+  # [NOTE] 綁定 API 在 spec.md 5.1 中是透過 PUT /api/v1/agents/{id} 更新 mcp_configs 欄位實現
   Rule: 使用者可以將 MCP Server 綁定到自己的 Agent
 
     Example: 成功 - 綁定單一 MCP Server
       Given Agent "agent-001" 尚未綁定任何 MCP Server
       And agent_mcp_bindings 表中無 agent_id 為 "agent-001" 的記錄
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-001 |
-        | mcp_ids  | mcp-001   |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | mcp_configs | [{"mcp_connection_id": "mcp-001"}] |
       Then 請求應成功，回傳狀態碼 201
       And agent_mcp_bindings 表應新增一筆記錄:
         | agent_id  | mcp_id  | created_at |
@@ -36,46 +37,46 @@ Feature: 綁定 Agent 與 MCP
         | get_forecast | WeatherService |
 
     Example: 成功 - 綁定多個 MCP Server
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-001       |
-        | mcp_ids  | mcp-001,mcp-002 |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | mcp_configs | [{"mcp_connection_id": "mcp-001"}, {"mcp_connection_id": "mcp-002"}] |
       Then 請求應成功
       And agent_mcp_bindings 表應新增兩筆記錄
       And Agent "agent-001" 可存取的工具數量應為 5
 
     Example: 成功 - 綁定公開的 MCP Server（非自己擁有）
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-001 |
-        | mcp_ids  | mcp-003   |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | mcp_configs | [{"mcp_connection_id": "mcp-003"}] |
       Then 請求應成功
       And Agent "agent-001" 應能存取 EmailService 的工具
 
     Example: 失敗 - 無法綁定 private MCP Server（非擁有者）
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-001 |
-        | mcp_ids  | mcp-005   |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | mcp_configs | [{"mcp_connection_id": "mcp-005"}] |
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "MCP Server 'PrivateTool' is private and not accessible"
       And agent_mcp_bindings 表應無新增記錄
 
     Example: 失敗 - 無法綁定狀態為 error 的 MCP Server
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-001 |
-        | mcp_ids  | mcp-004   |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | mcp_configs | [{"mcp_connection_id": "mcp-004"}] |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "MCP Server 'BrokenService' is not available (status: error)"
 
     Example: 失敗 - MCP Server 不存在
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-001       |
-        | mcp_ids  | non-existent-id |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | mcp_configs | [{"mcp_connection_id": "non-existent-id"}] |
       Then 請求應失敗，回傳狀態碼 404
       And 錯誤訊息應為 "MCP Server 'non-existent-id' not found"
 
     Example: 失敗 - 非 Agent 擁有者無法綁定
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id | agent-002 |
-        | mcp_ids  | mcp-001   |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-002":
+        | mcp_configs | [{"mcp_connection_id": "mcp-001"}] |
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You do not have permission to modify this agent"
   # ============================================================
@@ -149,7 +150,8 @@ Feature: 綁定 Agent 與 MCP
         | mcp_id  | bound_at            |
         | mcp-001 | 2024-01-01 10:00:00 |
         | mcp-002 | 2024-01-02 15:30:00 |
-      When 使用者 "user-001" 查詢 Agent "agent-001" 的 MCP 綁定
+      # API: GET /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 GET 請求至 "/api/v1/agents/agent-001"
       Then 請求應成功
       And 回傳結果應包含:
         | mcp_id  | name           | status | tools_count | bound_at            |
@@ -158,7 +160,8 @@ Feature: 綁定 Agent 與 MCP
 
     Example: 成功 - 查詢無綁定的 Agent
       Given Agent "agent-001" 未綁定任何 MCP Server
-      When 使用者 "user-001" 查詢 Agent "agent-001" 的 MCP 綁定
+      # API: GET /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 GET 請求至 "/api/v1/agents/agent-001"
       Then 請求應成功
       And 回傳的 data 陣列應為空
   # ============================================================

@@ -22,9 +22,9 @@ Feature: 創建對話會話
 
     Example: 成功 - 創建新會話
       Given conversations 表中 user_id 為 "user-001" 且 agent_id 為 "agent-001" 的會話數為 0
-      When 使用者發送 POST 請求至 "/api/conversations":
-        | agent_id | agent-001      |
-        | title    | Math Questions |
+      # API: POST /api/v1/agents/{id}/conversations
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/conversations":
+        | title | Math Questions |
       Then 請求應成功，回傳狀態碼 201
       And conversations 表應新增一筆記錄:
         | field           | value           |
@@ -45,8 +45,8 @@ Feature: 創建對話會話
         | status   | active         |
 
     Example: 成功 - 未指定 title 時自動生成
-      When 使用者發送 POST 請求至 "/api/conversations":
-        | agent_id | agent-001 |
+      # API: POST /api/v1/agents/{id}/conversations
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/conversations"
       Then 請求應成功
       And 新會話的 title 應為 "New conversation with ChatBot"
 
@@ -54,9 +54,9 @@ Feature: 創建對話會話
       Given 使用者已有與 Agent "agent-001" 的會話:
         | id       | title      |
         | conv-001 | First Chat |
-      When 使用者發送 POST 請求至 "/api/conversations":
-        | agent_id | agent-001   |
-        | title    | Second Chat |
+      # API: POST /api/v1/agents/{id}/conversations
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/conversations":
+        | title | Second Chat |
       Then 請求應成功
       And conversations 表中 user_id 為 "user-001" 且 agent_id 為 "agent-001" 的記錄數應為 2
 
@@ -64,8 +64,8 @@ Feature: 創建對話會話
       Given Agent "agent-001" 的 visibility 為 "public"
       And Agent "agent-001" 的 owner_id 為 "user-001"
       Given 使用者 "user-002" 已登入
-      When 使用者發送 POST 請求至 "/api/conversations":
-        | agent_id | agent-001 |
+      # API: POST /api/v1/agents/{id}/conversations
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/conversations"
       Then 請求應成功
       And 新會話的 user_id 應為 "user-002"
   # ============================================================
@@ -75,33 +75,33 @@ Feature: 創建對話會話
   Rule: 只能與可對話的 Agent 創建會話
 
     Example: 失敗 - Agent 不存在
-      When 使用者發送 POST 請求至 "/api/conversations":
-        | agent_id | non-existent-agent |
+      # API: POST /api/v1/agents/{id}/conversations
+      When 使用者發送 POST 請求至 "/api/v1/agents/non-existent-agent/conversations"
       Then 請求應失敗，回傳狀態碼 404
       And 錯誤訊息應為 "Agent 'non-existent-agent' not found"
 
     Example: 失敗 - Agent 為 triggers 模式
-      When 使用者發送 POST 請求至 "/api/conversations":
-        | agent_id | agent-002 |
+      # API: POST /api/v1/agents/{id}/conversations
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-002/conversations"
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Agent 'TaskBot' is in triggers mode and does not support chat conversations"
 
     Example: 失敗 - Agent 為 draft 狀態
-      When 使用者發送 POST 請求至 "/api/conversations":
-        | agent_id | agent-004 |
+      # API: POST /api/v1/agents/{id}/conversations
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-004/conversations"
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Agent 'DraftBot' is not active (status: draft)"
 
     Example: 失敗 - Agent 為 inactive 狀態
-      When 使用者發送 POST 請求至 "/api/conversations":
-        | agent_id | agent-005 |
+      # API: POST /api/v1/agents/{id}/conversations
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-005/conversations"
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Agent 'InactiveBot' is not active (status: inactive)"
 
     Example: 失敗 - 無權存取 private Agent
       Given 使用者 "user-001" 已登入
-      When 使用者發送 POST 請求至 "/api/conversations":
-        | agent_id | agent-003 |
+      # API: POST /api/v1/agents/{id}/conversations
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-003/conversations"
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You do not have permission to access this agent"
   # ============================================================
@@ -112,8 +112,8 @@ Feature: 創建對話會話
 
     Example: 失敗 - 超過會話數量上限
       Given 使用者 "user-001" 已有 100 個 active 會話（達到上限）
-      When 使用者發送 POST 請求至 "/api/conversations":
-        | agent_id | agent-001 |
+      # API: POST /api/v1/agents/{id}/conversations
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/conversations"
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Maximum conversation limit reached (100). Please delete some conversations first."
   # ============================================================
@@ -128,7 +128,8 @@ Feature: 創建對話會話
         | conv-001 | agent-001 | Chat 1   | active   | 2024-01-15 10:00:00 |
         | conv-002 | agent-001 | Chat 2   | active   | 2024-01-14 09:00:00 |
         | conv-003 | agent-001 | Archived | archived | 2024-01-10 08:00:00 |
-      When 使用者發送 GET 請求至 "/api/conversations"
+      # API: GET /api/v1/agents/{id}/conversations
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations"
       Then 請求應成功
       And 回傳結果應包含:
         | total | 3 |
@@ -147,24 +148,27 @@ Feature: 創建對話會話
 
     Example: 成功 - 依狀態篩選
       Given 使用者有 2 個 active 會話和 1 個 archived 會話
-      When 使用者發送 GET 請求至 "/api/conversations":
+      # API: GET /api/v1/agents/{id}/conversations
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations":
         | status | active |
       Then 回傳結果的 total 應為 2
       And 所有回傳的會話 status 應為 "active"
 
     Example: 成功 - 依 Agent 篩選
-      When 使用者發送 GET 請求至 "/api/conversations":
-        | agent_id | agent-001 |
+      # API: GET /api/v1/agents/{id}/conversations
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations":
       Then 回傳結果應只包含與 agent-001 的會話
 
     Example: 成功 - 關鍵字搜尋（title）
-      When 使用者發送 GET 請求至 "/api/conversations":
+      # API: GET /api/v1/agents/{id}/conversations
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations":
         | search | Math |
       Then 回傳結果應包含 title 含有 "Math" 的會話
 
     Example: 只能查詢自己的會話
       Given 使用者 "user-002" 有會話 "conv-other"
-      When 使用者 "user-001" 發送 GET 請求至 "/api/conversations"
+      # API: GET /api/v1/agents/{id}/conversations
+      When 使用者 "user-001" 發送 GET 請求至 "/api/v1/agents/agent-001/conversations"
       Then 回傳結果不應包含 "conv-other"
   # ============================================================
   # Rule: 分頁功能
@@ -174,7 +178,8 @@ Feature: 創建對話會話
 
     Example: 成功 - 分頁查詢
       Given 使用者有 25 個會話
-      When 使用者發送 GET 請求至 "/api/conversations":
+      # API: GET /api/v1/agents/{id}/conversations
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations":
         | page      |  2 |
         | page_size | 10 |
       Then 請求應成功
@@ -195,7 +200,8 @@ Feature: 創建對話會話
         | id   | role      | content                 | created_at          |
         | m-01 | user      | Hello                   | 2024-01-15 10:00:00 |
         | m-02 | assistant | Hi! How can I help you? | 2024-01-15 10:00:05 |
-      When 使用者發送 GET 請求至 "/api/conversations":
+      # API: GET /api/v1/agents/{id}/conversations
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations":
         | include_preview | true |
       Then 回傳的會話 "conv-001" 應包含:
         | field                | value                   |

@@ -21,7 +21,7 @@ Feature: 新增 LLM 供應商配置
 
     Example: 成功 - 新增 OpenAI 配置
       Given 使用者 "admin@example.com" 已登入（角色為 admin）
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | field         | value               |
         | provider_type | openai              |
         | display_name  | OpenAI GPT-4        |
@@ -51,7 +51,7 @@ Feature: 新增 LLM 供應商配置
 
     Example: 成功 - 自訂 base_url
       Given 使用者 "admin@example.com" 已登入
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider_type | openai                       |
         | model_name    | gpt-4o                       |
         | api_key       | sk-xxx                       |
@@ -66,7 +66,7 @@ Feature: 新增 LLM 供應商配置
 
     Example: 成功 - 新增 Azure OpenAI 配置
       Given 使用者 "admin@example.com" 已登入
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | field           | value                                |
         | provider_type   | azure_openai                         |
         | display_name    | Azure GPT-4                          |
@@ -84,7 +84,7 @@ Feature: 新增 LLM 供應商配置
         | api_version     |                   2024-02-15-preview |
 
     Example: 失敗 - Azure OpenAI 缺少必要欄位
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider_type | azure_openai |
         | model_name    | gpt-4        |
         | api_key       | xxx          |
@@ -98,7 +98,7 @@ Feature: 新增 LLM 供應商配置
 
     Example: 成功 - 新增 Anthropic 配置
       Given 使用者 "admin@example.com" 已登入
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider_type | anthropic              |
         | display_name  | Claude 3 Opus          |
         | model_name    | claude-3-opus-20240229 |
@@ -113,7 +113,7 @@ Feature: 新增 LLM 供應商配置
 
     Example: 成功 - 新增 DashScope 配置
       Given 使用者 "admin@example.com" 已登入
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider_type | dashscope        |
         | display_name  | 通義千問         |
         | model_name    | qwen-max         |
@@ -128,7 +128,7 @@ Feature: 新增 LLM 供應商配置
 
     Example: 成功 - 新增 Ollama 配置（無需 API Key）
       Given 使用者 "admin@example.com" 已登入
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider_type | ollama                 |
         | display_name  | Local Llama 3          |
         | model_name    | llama3:8b              |
@@ -154,20 +154,20 @@ Feature: 新增 LLM 供應商配置
 
     Example: 失敗 - 缺少 provider_type
       Given 使用者 "admin@example.com" 已登入
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | model_name | gpt-4o |
         | api_key    | xxx    |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "provider_type is required"
 
     Example: 失敗 - 不支援的 provider_type
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider_type | unknown_provider |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Unsupported provider_type: 'unknown_provider'. Supported: openai, azure_openai, anthropic, dashscope, ollama"
 
     Example: 失敗 - 缺少 model_name
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider_type | openai |
         | api_key       | xxx    |
       Then 請求應失敗，回傳狀態碼 400
@@ -175,7 +175,7 @@ Feature: 新增 LLM 供應商配置
 
     Example: 失敗 - display_name 重複
       Given model_providers 表已存在 display_name 為 "My GPT" 的記錄
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider_type | openai |
         | display_name  | My GPT |
         | model_name    | gpt-4o |
@@ -190,7 +190,7 @@ Feature: 新增 LLM 供應商配置
 
     Example: 失敗 - 一般用戶禁止新增
       Given 使用者 "user@example.com" 已登入（角色為 user）
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider_type | openai |
         | model_name    | gpt-4o |
         | api_key       | xxx    |
@@ -204,7 +204,7 @@ Feature: 新增 LLM 供應商配置
   Rule: 新增配置時可選擇自動測試連線
 
     Example: 成功 - 新增並測試連線通過
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider_type   | openai       |
         | model_name      | gpt-4o       |
         | api_key         | sk-valid-key |
@@ -215,7 +215,7 @@ Feature: 新增 LLM 供應商配置
         | connection_test | passed |
 
     Example: 失敗 - 新增但連線測試失敗
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider_type   | openai         |
         | model_name      | gpt-4o         |
         | api_key         | sk-invalid-key |
@@ -225,7 +225,7 @@ Feature: 新增 LLM 供應商配置
       And model_providers 表應無新增記錄
 
     Example: 成功 - 跳過連線測試
-      When 使用者發送 POST 請求至 "/api/admin/models":
+      When 使用者發送 POST 請求至 "/api/v1/llm-models":
         | provider_type   | openai          |
         | model_name      | gpt-4o          |
         | api_key         | sk-untested-key |

@@ -19,14 +19,15 @@ Feature: 綁定 Agent 與 Skills
   # Rule: 建立綁定關係
   # ============================================================
 
+  # [NOTE] 綁定 API 在 spec.md 5.1 中是透過 PUT /api/v1/agents/{id} 更新 skill_ids 欄位實現
   Rule: 使用者可以將 Skills 綁定到自己的 Agent
 
     Example: 成功 - 綁定單一 Skill
       Given Agent "agent-001" 尚未綁定任何 Skill
       And agent_skill_bindings 表中無 agent_id 為 "agent-001" 的記錄
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id  | agent-001 |
-        | skill_ids | skill-001 |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | skill_ids | ["skill-001"] |
       Then 請求應成功，回傳狀態碼 201
       And agent_skill_bindings 表應新增一筆記錄:
         | agent_id  | skill_id  | created_at | enabled |
@@ -34,9 +35,9 @@ Feature: 綁定 Agent 與 Skills
       And Agent "agent-001" 執行時應能調用 calculate 函數
 
     Example: 成功 - 綁定多個 Skills
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id  | agent-001           |
-        | skill_ids | skill-001,skill-002 |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | skill_ids | ["skill-001", "skill-002"] |
       Then 請求應成功
       And agent_skill_bindings 表應新增兩筆記錄
       And Agent "agent-001" 可用的函數應為:
@@ -45,51 +46,51 @@ Feature: 綁定 Agent 與 Skills
         | search_web    | WebSearch  |
 
     Example: 成功 - 綁定公開的系統 Skill
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id  | agent-001 |
-        | skill_ids | skill-002 |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | skill_ids | ["skill-002"] |
       Then 請求應成功
       And Agent "agent-001" 應能調用 WebSearch 的 search_web 函數
 
     Example: 成功 - 綁定自己的 private Skill
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id  | agent-001 |
-        | skill_ids | skill-003 |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | skill_ids | ["skill-003"] |
       Then 請求應成功
       And Agent "agent-001" 應能調用 SendEmail 的 send_email 函數
 
     Example: 失敗 - 無法綁定他人的 private Skill
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id  | agent-001 |
-        | skill_ids | skill-004 |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | skill_ids | ["skill-004"] |
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "Skill 'CustomTool' is private and not accessible"
 
     Example: 失敗 - 無法綁定 deprecated Skill
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id  | agent-001 |
-        | skill_ids | skill-005 |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | skill_ids | ["skill-005"] |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Skill 'Deprecated' is deprecated and cannot be used for new bindings"
 
     Example: 失敗 - 無法綁定狀態為 error 的 Skill
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id  | agent-001 |
-        | skill_ids | skill-006 |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | skill_ids | ["skill-006"] |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Skill 'BrokenSkill' is not available (status: error)"
 
     Example: 失敗 - Skill 不存在
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id  | agent-001       |
-        | skill_ids | non-existent-id |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | skill_ids | ["non-existent-id"] |
       Then 請求應失敗，回傳狀態碼 404
       And 錯誤訊息應為 "Skill 'non-existent-id' not found"
 
     Example: 失敗 - 非 Agent 擁有者無法綁定
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id  | agent-002 |
-        | skill_ids | skill-001 |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-002":
+        | skill_ids | ["skill-001"] |
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You do not have permission to modify this agent"
   # ============================================================
@@ -100,9 +101,9 @@ Feature: 綁定 Agent 與 Skills
 
     Example: 冪等性 - 重複綁定相同 Skill 不產生錯誤
       Given Agent "agent-001" 已綁定 Skill "skill-001"
-      When 使用者 "user-001" 再次提交綁定請求:
-        | agent_id  | agent-001 |
-        | skill_ids | skill-001 |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 再次發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | skill_ids | ["skill-001"] |
       Then 請求應成功，回傳狀態碼 200
       And agent_skill_bindings 表中應維持 1 筆記錄（不新增重複）
       And 回傳訊息應標示 "already_bound": ["skill-001"]
@@ -117,9 +118,9 @@ Feature: 綁定 Agent 與 Skills
         | skill_id  |
         | skill-001 |
         | skill-002 |
-      When 使用者 "user-001" 提交解除綁定請求:
-        | agent_id  | agent-001 |
-        | skill_ids | skill-001 |
+      # API: PUT /api/v1/agents/{id} (更新 skill_ids 移除 skill-001)
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | skill_ids | ["skill-002"] |
       Then 請求應成功，回傳狀態碼 200
       And agent_skill_bindings 表應刪除 agent-001 與 skill-001 的記錄
       And Agent "agent-001" 應無法再調用 calculate 函數
@@ -127,9 +128,9 @@ Feature: 綁定 Agent 與 Skills
 
     Example: 成功 - 解除所有綁定
       Given Agent "agent-001" 已綁定 3 個 Skills
-      When 使用者 "user-001" 提交解除綁定請求:
-        | agent_id   | agent-001 |
-        | unbind_all | true      |
+      # API: PUT /api/v1/agents/{id} (設定 skill_ids 為空陣列)
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | skill_ids | [] |
       Then 請求應成功
       And agent_skill_bindings 表中 agent_id 為 "agent-001" 的記錄應全部刪除
   # ============================================================
@@ -170,7 +171,8 @@ Feature: 綁定 Agent 與 Skills
         | skill_id  | bound_at            | enabled |
         | skill-001 | 2024-01-01 10:00:00 | true    |
         | skill-002 | 2024-01-02 15:30:00 | false   |
-      When 使用者 "user-001" 查詢 Agent "agent-001" 的 Skill 綁定
+      # API: GET /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 GET 請求至 "/api/v1/agents/agent-001"
       Then 請求應成功
       And 回傳結果應包含:
         | skill_id  | name       | function_name | enabled | bound_at            |
@@ -190,9 +192,9 @@ Feature: 綁定 Agent 與 Skills
 
     Example: 失敗 - 超過 Skill 綁定上限
       Given Agent "agent-001" 已綁定 20 個 Skills（達到上限）
-      When 使用者 "user-001" 提交綁定請求:
-        | agent_id  | agent-001    |
-        | skill_ids | new-skill-id |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | skill_ids | [...原有20個..., "new-skill-id"] |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Agent has reached the maximum skill binding limit (20)"
   # ============================================================

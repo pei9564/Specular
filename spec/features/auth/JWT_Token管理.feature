@@ -115,63 +115,67 @@ Feature: JWT Token 管理
   # Rule: Refresh Token
   # ============================================================
 
-  Rule: 系統支援使用 Refresh Token 更新 Access Token
-
-    Example: 成功 - 使用 Refresh Token 獲取新的 Access Token
-      Given 用戶 "user-001" 持有有效的 Refresh Token
-      And refresh_tokens 表中該 Token 記錄:
-        | field      | value      |
-        | user_id    | user-001   |
-        | token_hash | (hash 值)  |
-        | revoked    | false      |
-        | expires_at | (未來時間) |
-      When 用戶發送 POST 請求至 "/auth/refresh":
-        | refresh_token | (Refresh Token 值) |
-      Then 請求應成功，回傳狀態碼 200
-      And 回傳結果應包含:
-        | field        | value          |
-        | access_token | (新 JWT Token) |
-        | token_type   | bearer         |
-        | expires_in   |          86400 |
-      And 新的 Access Token 應包含最新的用戶資訊
-
-    Example: 失敗 - Refresh Token 已過期
-      Given 用戶持有 Refresh Token，expires_at 為過去時間
-      When 用戶發送 POST 請求至 "/auth/refresh"
-      Then 請求應失敗，回傳狀態碼 401
-      And 錯誤訊息應為 "Refresh token has expired"
-
-    Example: 失敗 - Refresh Token 已被撤銷
-      Given 用戶持有 Refresh Token
-      And refresh_tokens 表中該 Token 的 revoked 為 true
-      When 用戶發送 POST 請求至 "/auth/refresh"
-      Then 請求應失敗，回傳狀態碼 401
-      And 錯誤訊息應為 "Refresh token has been revoked"
+  # [TODO] 以下 Refresh Token 相關 API 未在 spec.md 5.1 中定義，請確認是否需要實作
+  # Rule: 系統支援使用 Refresh Token 更新 Access Token
+  #
+  #   Example: 成功 - 使用 Refresh Token 獲取新的 Access Token
+  #     Given 用戶 "user-001" 持有有效的 Refresh Token
+  #     And refresh_tokens 表中該 Token 記錄:
+  #       | field      | value      |
+  #       | user_id    | user-001   |
+  #       | token_hash | (hash 值)  |
+  #       | revoked    | false      |
+  #       | expires_at | (未來時間) |
+  #     # API: POST /api/v1/auth/refresh (未定義)
+  #     When 用戶發送 POST 請求至 "/api/v1/auth/refresh":
+  #       | refresh_token | (Refresh Token 值) |
+  #     Then 請求應成功，回傳狀態碼 200
+  #     And 回傳結果應包含:
+  #       | field        | value          |
+  #       | access_token | (新 JWT Token) |
+  #       | token_type   | bearer         |
+  #       | expires_in   |          86400 |
+  #     And 新的 Access Token 應包含最新的用戶資訊
+  #
+  #   Example: 失敗 - Refresh Token 已過期
+  #     Given 用戶持有 Refresh Token，expires_at 為過去時間
+  #     When 用戶發送 POST 請求至 "/api/v1/auth/refresh"
+  #     Then 請求應失敗，回傳狀態碼 401
+  #     And 錯誤訊息應為 "Refresh token has expired"
+  #
+  #   Example: 失敗 - Refresh Token 已被撤銷
+  #     Given 用戶持有 Refresh Token
+  #     And refresh_tokens 表中該 Token 的 revoked 為 true
+  #     When 用戶發送 POST 請求至 "/api/v1/auth/refresh"
+  #     Then 請求應失敗，回傳狀態碼 401
+  #     And 錯誤訊息應為 "Refresh token has been revoked"
   # ============================================================
   # Rule: Token 撤銷（登出）
   # ============================================================
 
-  Rule: 用戶可以撤銷自己的 Token
-
-    Example: 成功 - 登出撤銷當前 Token
-      Given 用戶 "user-001" 持有 Access Token，jti 為 "token-abc"
-      And token_registry 表中記錄:
-        | jti       | user_id  | revoked |
-        | token-abc | user-001 | false   |
-      When 用戶使用該 Token 發送 POST 請求至 "/auth/logout"
-      Then 請求應成功，回傳狀態碼 200
-      And token_registry 表應更新:
-        | jti       | revoked | revoked_at |
-        | token-abc | true    | (當前時間) |
-      And 該 Token 後續的請求應被拒絕
-
-    Example: 成功 - 登出撤銷所有 Token
-      Given 用戶 "user-001" 有 3 個有效的 Token
-      When 用戶發送 POST 請求至 "/auth/logout":
-        | revoke_all | true |
-      Then 請求應成功
-      And token_registry 表中 user_id 為 "user-001" 的所有記錄應標記為 revoked
-      And refresh_tokens 表中 user_id 為 "user-001" 的所有記錄應標記為 revoked
+  # [TODO] 以下 Logout 相關 API 未在 spec.md 5.1 中定義，請確認是否需要實作
+  # Rule: 用戶可以撤銷自己的 Token
+  #
+  #   Example: 成功 - 登出撤銷當前 Token
+  #     Given 用戶 "user-001" 持有 Access Token，jti 為 "token-abc"
+  #     And token_registry 表中記錄:
+  #       | jti       | user_id  | revoked |
+  #       | token-abc | user-001 | false   |
+  #     # API: POST /api/v1/auth/logout (未定義)
+  #     When 用戶使用該 Token 發送 POST 請求至 "/api/v1/auth/logout"
+  #     Then 請求應成功，回傳狀態碼 200
+  #     And token_registry 表應更新:
+  #       | jti       | revoked | revoked_at |
+  #       | token-abc | true    | (當前時間) |
+  #     And 該 Token 後續的請求應被拒絕
+  #
+  #   Example: 成功 - 登出撤銷所有 Token
+  #     Given 用戶 "user-001" 有 3 個有效的 Token
+  #     When 用戶發送 POST 請求至 "/api/v1/auth/logout":
+  #       | revoke_all | true |
+  #     Then 請求應成功
+  #     And token_registry 表中 user_id 為 "user-001" 的所有記錄應標記為 revoked
+  #     And refresh_tokens 表中 user_id 為 "user-001" 的所有記錄應標記為 revoked
   # ============================================================
   # Rule: Token 安全性
   # ============================================================

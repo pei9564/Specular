@@ -23,7 +23,8 @@ Feature: 刪除對話會話
   Rule: 刪除會話預設使用軟刪除（標記為 deleted）
 
     Example: 成功 - 軟刪除會話
-      When 使用者發送 DELETE 請求至 "/api/conversations/conv-001"
+      # API: DELETE /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 DELETE 請求至 "/api/v1/agents/agent-001/conversations/conv-001"
       Then 請求應成功，回傳狀態碼 200
       And conversations 表中 conv-001 應更新:
         | field      | old_value | new_value  |
@@ -36,7 +37,8 @@ Feature: 刪除對話會話
 
     Example: 軟刪除後會話不出現在列表
       Given 會話 "conv-001" 已被軟刪除（status = deleted）
-      When 使用者發送 GET 請求至 "/api/conversations"
+      # API: GET /api/v1/agents/{id}/conversations
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations"
       Then 回傳結果不應包含 "conv-001"
 
     Example: 軟刪除後訊息仍保留在資料庫
@@ -50,7 +52,8 @@ Feature: 刪除對話會話
   Rule: 可選擇永久刪除會話及其所有資料
 
     Example: 成功 - 硬刪除會話
-      When 使用者發送 DELETE 請求至 "/api/conversations/conv-001":
+      # API: DELETE /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 DELETE 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | permanent | true |
       Then 請求應成功，回傳狀態碼 200
       And conversations 表中應不存在 id 為 "conv-001" 的記錄
@@ -58,14 +61,16 @@ Feature: 刪除對話會話
       And tool_calls 表中應不存在 message_id 為 "m-02" 的記錄
 
     Example: 硬刪除需要二次確認
-      When 使用者發送 DELETE 請求至 "/api/conversations/conv-001":
+      # API: DELETE /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 DELETE 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | permanent | true  |
         | confirm   | false |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Permanent deletion requires confirmation. Set confirm=true to proceed."
 
     Example: 成功 - 硬刪除並確認
-      When 使用者發送 DELETE 請求至 "/api/conversations/conv-001":
+      # API: DELETE /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 DELETE 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | permanent | true |
         | confirm   | true |
       Then 請求應成功
@@ -77,7 +82,8 @@ Feature: 刪除對話會話
   Rule: 支援批次刪除多個會話
 
     Example: 成功 - 批次軟刪除
-      When 使用者發送 DELETE 請求至 "/api/conversations/batch":
+      # API: POST /api/v1/agents/{id}/conversations/batch-delete
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/conversations/batch-delete":
         | ids | ["conv-001", "conv-002"] |
       Then 請求應成功，回傳狀態碼 200
       And conversations 表中 conv-001 和 conv-002 的 status 應為 "deleted"
@@ -86,7 +92,8 @@ Feature: 刪除對話會話
         | deleted_count |     2 |
 
     Example: 批次刪除部分失敗
-      When 使用者發送 DELETE 請求至 "/api/conversations/batch":
+      # API: POST /api/v1/agents/{id}/conversations/batch-delete
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/conversations/batch-delete":
         | ids | ["conv-001", "conv-004", "non-existent"] |
       Then 請求應成功（部分成功），回傳狀態碼 207
       And 回傳結果應包含:
@@ -104,19 +111,22 @@ Feature: 刪除對話會話
   Rule: 用戶只能刪除自己的會話
 
     Example: 失敗 - 刪除他人會話
-      When 使用者 "user-001" 發送 DELETE 請求至 "/api/conversations/conv-004"
+      # API: DELETE /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者 "user-001" 發送 DELETE 請求至 "/api/v1/agents/agent-001/conversations/conv-004"
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You do not have permission to delete this conversation"
       And conversations 表中 conv-004 應維持不變
 
     Example: 失敗 - 會話不存在
-      When 使用者發送 DELETE 請求至 "/api/conversations/non-existent"
+      # API: DELETE /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 DELETE 請求至 "/api/v1/agents/agent-001/conversations/non-existent"
       Then 請求應失敗，回傳狀態碼 404
       And 錯誤訊息應為 "Conversation not found"
 
     Example: 成功 - 管理員可刪除任何會話
       Given 使用者 "admin@example.com" 已登入（角色為 admin）
-      When 使用者發送 DELETE 請求至 "/api/conversations/conv-004"
+      # API: DELETE /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 DELETE 請求至 "/api/v1/agents/agent-001/conversations/conv-004"
       Then 請求應成功
       And conversations 表中 conv-004 的 status 應為 "deleted"
   # ============================================================
@@ -126,7 +136,8 @@ Feature: 刪除對話會話
   Rule: 已封存的會話也可以被刪除
 
     Example: 成功 - 刪除已封存會話
-      When 使用者發送 DELETE 請求至 "/api/conversations/conv-003"
+      # API: DELETE /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 DELETE 請求至 "/api/v1/agents/agent-001/conversations/conv-003"
       Then 請求應成功
       And conversations 表中 conv-003 的 status 應為 "deleted"
   # ============================================================
@@ -137,7 +148,8 @@ Feature: 刪除對話會話
 
     Example: 成功 - 恢復已刪除會話
       Given 會話 "conv-001" 已被軟刪除（status = deleted）
-      When 使用者發送 POST 請求至 "/api/conversations/conv-001/restore"
+      # API: POST /api/v1/agents/{id}/conversations/{conv_id}/restore
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/conversations/conv-001/restore"
       Then 請求應成功，回傳狀態碼 200
       And conversations 表中 conv-001 應更新:
         | field      | old_value | new_value |
@@ -147,13 +159,15 @@ Feature: 刪除對話會話
 
     Example: 失敗 - 恢復已永久刪除的會話
       Given 會話 "conv-001" 已被永久刪除
-      When 使用者發送 POST 請求至 "/api/conversations/conv-001/restore"
+      # API: POST /api/v1/agents/{id}/conversations/{conv_id}/restore
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/conversations/conv-001/restore"
       Then 請求應失敗，回傳狀態碼 404
       And 錯誤訊息應為 "Conversation not found"
 
     Example: 查詢已刪除會話（用於恢復）
       Given 會話 "conv-001" 已被軟刪除
-      When 使用者發送 GET 請求至 "/api/conversations":
+      # API: GET /api/v1/agents/{id}/conversations
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations":
         | include_deleted | true |
       Then 回傳結果應包含 "conv-001"
       And conv-001 的 status 應為 "deleted"

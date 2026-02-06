@@ -23,7 +23,10 @@ Feature: 用戶註冊
       #   | email    | newuser@example.com |
       #   | password | SecurePass123!      |
       #   | name     | New User            |
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      # Content-Type: application/json
+      # Body: {"email": "newuser@example.com", "username": "newuser", "password": "SecurePass123!", "full_name": "New User"}
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | field     | value               |
         | email     | newuser@example.com |
         | username  | newuser             |
@@ -59,7 +62,8 @@ Feature: 用戶註冊
       And 回傳結果不應包含 hashed_password
 
     Example: 成功 - 密碼使用 bcrypt 加密儲存
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    | test@example.com |
         | username | testuser         |
         | password | MyPassword123    |
@@ -74,13 +78,11 @@ Feature: 用戶註冊
   Rule: Email 與 Username 必須唯一且格式正確
 
     Example: 失敗 - Email 已存在
-      # Given users 表中已存在:
-      #   | email                |
-      #   | existing@example.com |
       Given users 表中已存在:
         | email                |
         | existing@example.com |
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    | existing@example.com |
         | username | newuser2             |
         | password | SomePassword123      |
@@ -91,7 +93,8 @@ Feature: 用戶註冊
       Given users 表中已存在:
         | username |
         | user1    |
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    | unique@example.com |
         | username | user1              |
         | password | SomePassword123    |
@@ -99,7 +102,8 @@ Feature: 用戶註冊
       And 錯誤訊息應為 "Username 'user1' is already taken"
 
     Example: 失敗 - Email 格式無效
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    | invalid-email   |
         | username | validuser       |
         | password | SomePassword123 |
@@ -107,7 +111,8 @@ Feature: 用戶註冊
       And 錯誤訊息應為 "Invalid email format"
 
     Example: 失敗 - Email 為空
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    |                 |
         | username | validuser       |
         | password | SomePassword123 |
@@ -115,7 +120,8 @@ Feature: 用戶註冊
       And 錯誤訊息應為 "Email is required"
 
     Example: 成功 - Email 自動轉為小寫儲存
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    | NewUser@EXAMPLE.COM |
         | password | SomePassword123     |
       Then 請求應成功
@@ -127,35 +133,40 @@ Feature: 用戶註冊
   Rule: 密碼必須符合安全強度要求
 
     Example: 失敗 - 密碼過短（少於 8 字元）
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    | test@example.com |
         | password | Short1!          |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Password must be at least 8 characters long"
 
     Example: 失敗 - 密碼缺少數字
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    | test@example.com |
         | password | NoDigitsHere!    |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Password must contain at least one digit"
 
     Example: 失敗 - 密碼缺少大寫字母
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    | test@example.com |
         | password | nouppercase123!  |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Password must contain at least one uppercase letter"
 
     Example: 失敗 - 密碼為空
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    | test@example.com |
         | password |                  |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Password is required"
 
     Example: 成功 - 符合所有密碼要求
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    | strong@example.com |
         | password | StrongPass123!     |
       Then 請求應成功
@@ -181,7 +192,8 @@ Feature: 用戶註冊
   Rule: 註冊行為應記錄審計日誌
 
     Example: 成功註冊應記錄審計日誌
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    | audit@example.com |
         | password | Password123!      |
       Then 請求應成功
@@ -196,7 +208,8 @@ Feature: 用戶註冊
         | created_at  | (當前時間)        |
 
     Example: 失敗註冊應記錄審計日誌
-      When 用戶提交註冊請求:
+      # API: POST /api/v1/auth/register
+      When 用戶發送 POST 請求至 "/api/v1/auth/register":
         | email    | existing@example.com |
         | password | Password123!         |
       Then 請求應失敗

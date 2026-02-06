@@ -17,7 +17,8 @@ Feature: 切換對話會話
   Rule: 用戶可以取得特定會話的詳細資訊
 
     Example: 成功 - 取得會話詳情
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001"
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001"
       Then 請求應成功，回傳狀態碼 200
       And 回傳結果應包含:
         | field         | value     |
@@ -33,7 +34,8 @@ Feature: 切換對話會話
         | agent_mode | chat         |
 
     Example: 成功 - 取得會話並載入最近訊息
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001":
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001":
         | include_messages | true |
         | message_limit    |   20 |
       Then 回傳結果應包含 messages 陣列
@@ -41,12 +43,14 @@ Feature: 切換對話會話
       And messages 應依 created_at 升序排列
 
     Example: 失敗 - 會話不存在
-      When 使用者發送 GET 請求至 "/api/conversations/non-existent"
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/non-existent"
       Then 請求應失敗，回傳狀態碼 404
       And 錯誤訊息應為 "Conversation not found"
 
     Example: 失敗 - 無權存取他人會話
-      When 使用者 "user-001" 發送 GET 請求至 "/api/conversations/conv-005"
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者 "user-001" 發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-005"
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You do not have permission to access this conversation"
   # ============================================================
@@ -56,7 +60,9 @@ Feature: 切換對話會話
   Rule: 前端可標記當前活躍會話
 
     Example: 成功 - 設定當前活躍會話
-      When 使用者發送 POST 請求至 "/api/conversations/conv-002/activate"
+      # API: PUT /api/v1/user/preferences
+      When 使用者發送 PUT 請求至 "/api/v1/user/preferences":
+        | active_conversation | conv-002 |
       Then 請求應成功，回傳狀態碼 200
       And user_preferences 表應更新:
         | user_id             | user-001   |
@@ -65,23 +71,30 @@ Feature: 切換對話會話
 
     Example: 成功 - 切換到不同會話
       Given 使用者當前活躍會話為 "conv-001"
-      When 使用者發送 POST 請求至 "/api/conversations/conv-002/activate"
+      # API: PUT /api/v1/user/preferences
+      When 使用者發送 PUT 請求至 "/api/v1/user/preferences":
+        | active_conversation | conv-002 |
       Then 請求應成功
       And user_preferences 的 active_conversation 應更新為 "conv-002"
 
     Example: 成功 - 查詢當前活躍會話
       Given user_preferences 中 active_conversation 為 "conv-001"
-      When 使用者發送 GET 請求至 "/api/user/preferences"
+      # API: GET /api/v1/user/preferences
+      When 使用者發送 GET 請求至 "/api/v1/user/preferences"
       Then 回傳結果應包含:
         | field               | value    |
         | active_conversation | conv-001 |
 
     Example: 失敗 - 無法切換到不存在的會話
-      When 使用者發送 POST 請求至 "/api/conversations/non-existent/activate"
+      # API: PUT /api/v1/user/preferences
+      When 使用者發送 PUT 請求至 "/api/v1/user/preferences":
+        | active_conversation | non-existent |
       Then 請求應失敗，回傳狀態碼 404
 
     Example: 失敗 - 無法切換到他人會話
-      When 使用者 "user-001" 發送 POST 請求至 "/api/conversations/conv-005/activate"
+      # API: PUT /api/v1/user/preferences
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/user/preferences":
+        | active_conversation | conv-005 |
       Then 請求應失敗，回傳狀態碼 403
   # ============================================================
   # Rule: 切換到已封存會話
@@ -90,7 +103,8 @@ Feature: 切換對話會話
   Rule: 切換到已封存會話時應有適當提示
 
     Example: 成功 - 切換到已封存會話（唯讀模式）
-      When 使用者發送 GET 請求至 "/api/conversations/conv-004"
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-004"
       Then 請求應成功
       And 回傳結果應包含:
         | field     | value    |
@@ -98,7 +112,9 @@ Feature: 切換對話會話
         | read_only | true     |
 
     Example: 警告 - 嘗試切換到已封存會話
-      When 使用者發送 POST 請求至 "/api/conversations/conv-004/activate"
+      # API: PUT /api/v1/user/preferences
+      When 使用者發送 PUT 請求至 "/api/v1/user/preferences":
+        | active_conversation | conv-004 |
       Then 請求應成功
       And 回傳應包含警告:
         | warning | This conversation is archived and read-only |
@@ -109,7 +125,8 @@ Feature: 切換對話會話
   Rule: 切換會話時應更新存取記錄
 
     Example: 記錄會話存取時間
-      When 使用者發送 GET 請求至 "/api/conversations/conv-001"
+      # API: GET /api/v1/agents/{id}/conversations/{conv_id}
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/conversations/conv-001"
       Then conversations 表中 conv-001 應更新:
         | field            | new_value  |
         | last_accessed_at | (當前時間) |
@@ -131,14 +148,14 @@ Feature: 切換對話會話
     Example: 恢復上次活躍會話
       Given user_preferences 中 active_conversation 為 "conv-001"
       When 使用者重新登入
-      And 使用者發送 GET 請求至 "/api/user/preferences"
+      And 使用者發送 GET 請求至 "/api/v1/user/preferences"
       Then 回傳應包含上次活躍的會話 ID
       And 前端可據此自動載入該會話
 
     Example: 上次活躍會話已刪除時的處理
       Given user_preferences 中 active_conversation 為 "deleted-conv"
       And 會話 "deleted-conv" 已被刪除
-      When 使用者發送 GET 請求至 "/api/user/preferences"
+      When 使用者發送 GET 請求至 "/api/v1/user/preferences"
       Then active_conversation 應為 null
       And 前端應顯示會話列表讓用戶選擇
   # ============================================================
@@ -148,7 +165,8 @@ Feature: 切換對話會話
   Rule: 支援快速切換最近會話
 
     Example: 取得最近使用的會話列表
-      When 使用者發送 GET 請求至 "/api/conversations/recent":
+      # API: GET /api/v1/conversations/recent
+      When 使用者發送 GET 請求至 "/api/v1/conversations/recent":
         | limit | 5 |
       Then 請求應成功
       And 回傳結果應包含最近存取的 5 個會話
@@ -156,7 +174,8 @@ Feature: 切換對話會話
       And 每個會話應包含摘要資訊（不含完整訊息）
 
     Example: 取得與特定 Agent 的最近會話
-      When 使用者發送 GET 請求至 "/api/conversations/recent":
+      # API: GET /api/v1/conversations/recent
+      When 使用者發送 GET 請求至 "/api/v1/conversations/recent":
         | agent_id | agent-001 |
         | limit    |         3 |
       Then 回傳結果應只包含與 agent-001 的會話

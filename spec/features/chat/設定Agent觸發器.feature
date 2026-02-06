@@ -15,7 +15,8 @@ Feature: 設定 Agent 觸發器
   Rule: 可以為 triggers 模式的 Agent 設定排程觸發
 
     Example: 成功 - 設定 Cron 排程觸發器
-      When 使用者發送 POST 請求至 "/api/agents/agent-001/triggers":
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/triggers":
         | type            | schedule       |
         | name            | Daily Report   |
         | config.cron     |    0 9 * * 1-5 |
@@ -37,21 +38,24 @@ Feature: 設定 Agent 觸發器
       And 回傳結果應包含 trigger_id 和 next_run_at
 
     Example: 成功 - 設定每小時執行的排程
-      When 使用者發送 POST 請求至 "/api/agents/agent-001/triggers":
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/triggers":
         | type        | schedule  |
         | config.cron | 0 * * * * |
       Then 請求應成功
       And next_run_at 應為下一個整點時間
 
     Example: 失敗 - 無效的 Cron 表達式
-      When 使用者發送 POST 請求至 "/api/agents/agent-001/triggers":
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/triggers":
         | type        | schedule     |
         | config.cron | invalid-cron |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Invalid cron expression: 'invalid-cron'"
 
     Example: 失敗 - 執行頻率過高（低於 1 分鐘）
-      When 使用者發送 POST 請求至 "/api/agents/agent-001/triggers":
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/triggers":
         | type        | schedule       |
         | config.cron | */30 * * * * * |
       Then 請求應失敗，回傳狀態碼 400
@@ -63,7 +67,8 @@ Feature: 設定 Agent 觸發器
   Rule: 可以設定 Webhook 觸發器接收外部請求
 
     Example: 成功 - 設定 Webhook 觸發器
-      When 使用者發送 POST 請求至 "/api/agents/agent-001/triggers":
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/triggers":
         | type           | webhook                                                             |
         | name           | GitHub Webhook                                                      |
         | config.secret  | my-webhook-secret                                                   |
@@ -80,7 +85,8 @@ Feature: 設定 Agent 觸發器
       And secret 應只在創建時回傳一次，後續查詢不應包含
 
     Example: 成功 - 自動生成 Webhook Secret
-      When 使用者發送 POST 請求至 "/api/agents/agent-001/triggers":
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/triggers":
         | type | webhook             |
         | name | Auto Secret Webhook |
       Then 請求應成功
@@ -101,7 +107,8 @@ Feature: 設定 Agent 觸發器
   Rule: 可以設定系統內部事件觸發器
 
     Example: 成功 - 設定文件上傳事件觸發器
-      When 使用者發送 POST 請求至 "/api/agents/agent-001/triggers":
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/triggers":
         | type           | event                                       |
         | name           | Process New Documents                       |
         | config.event   | document.uploaded                           |
@@ -114,7 +121,8 @@ Feature: 設定 Agent 觸發器
         | config | {"event": "document.uploaded", "filter": {...}} |
 
     Example: 支援的系統事件列表
-      When 使用者發送 GET 請求至 "/api/triggers/events"
+      # API: GET /api/v1/triggers/events
+      When 使用者發送 GET 請求至 "/api/v1/triggers/events"
       Then 回傳結果應包含可用的事件類型:
         | event              | description    |
         | document.uploaded  | 文件上傳完成   |
@@ -150,7 +158,8 @@ Feature: 設定 Agent 觸發器
       Then Agent 收到的輸入應包含當前時間戳和觸發器名稱
 
     Example: 失敗 - 無效的變數引用
-      When 使用者發送 POST 請求至 "/api/agents/agent-001/triggers":
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/triggers":
         | input_template | {{invalid.variable}} |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Invalid template variable: 'invalid.variable'"
@@ -161,13 +170,15 @@ Feature: 設定 Agent 觸發器
   Rule: 只有 Agent 擁有者可以設定觸發器
 
     Example: 失敗 - 為他人的 Agent 設定觸發器
-      When 使用者 "user-001" 發送 POST 請求至 "/api/agents/agent-003/triggers":
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者 "user-001" 發送 POST 請求至 "/api/v1/agents/agent-003/triggers":
         | type | schedule |
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You do not have permission to modify this agent"
 
     Example: 失敗 - 為 chat 模式 Agent 設定觸發器
-      When 使用者發送 POST 請求至 "/api/agents/agent-002/triggers":
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-002/triggers":
         | type | schedule |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Triggers can only be configured for agents in 'triggers' mode"
@@ -179,7 +190,8 @@ Feature: 設定 Agent 觸發器
 
     Example: 失敗 - 超過觸發器上限
       Given Agent "agent-001" 已有 10 個觸發器（達到上限）
-      When 使用者發送 POST 請求至 "/api/agents/agent-001/triggers":
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/triggers":
         | type | schedule |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Maximum trigger limit reached (10 per agent)"
@@ -195,7 +207,8 @@ Feature: 設定 Agent 觸發器
         | trg-001 | schedule | Daily Report  | active |
         | trg-002 | webhook  | GitHub Hook   | active |
         | trg-003 | event    | Doc Processor | paused |
-      When 使用者發送 GET 請求至 "/api/agents/agent-001/triggers"
+      # API: GET /api/v1/agents/{id}/triggers
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/triggers"
       Then 請求應成功
       And 回傳結果應包含 3 個觸發器
       And 每個觸發器應包含:

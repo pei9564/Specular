@@ -24,7 +24,8 @@ Feature: 查詢觸發器執行歷史
   Rule: 用戶可以查詢觸發器的執行歷史
 
     Example: 成功 - 查詢特定觸發器的執行歷史
-      When 使用者發送 GET 請求至 "/api/triggers/trg-001/executions"
+      # API: GET /api/v1/agents/{id}/triggers/{trigger_id}/executions
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/triggers/trg-001/executions"
       Then 請求應成功，回傳狀態碼 200
       And 回傳結果應包含:
         | field | value |
@@ -43,7 +44,8 @@ Feature: 查詢觸發器執行歷史
         | tokens_used  | number   | Token 使用量                    |
 
     Example: 成功 - 查詢 Agent 的所有觸發器執行歷史
-      When 使用者發送 GET 請求至 "/api/agents/agent-001/executions"
+      # API: GET /api/v1/agents/{id}/executions
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/executions"
       Then 請求應成功
       And 回傳結果應包含 Agent 下所有觸發器的執行記錄
       And 每筆記錄應包含 trigger_name 欄位
@@ -54,7 +56,8 @@ Feature: 查詢觸發器執行歷史
   Rule: 執行歷史支援分頁查詢
 
     Example: 成功 - 分頁查詢
-      When 使用者發送 GET 請求至 "/api/triggers/trg-001/executions":
+      # API: GET /api/v1/agents/{id}/triggers/{trigger_id}/executions
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/triggers/trg-001/executions":
         | page      | 1 |
         | page_size | 2 |
       Then 請求應成功
@@ -66,7 +69,8 @@ Feature: 查詢觸發器執行歷史
       And data 陣列應包含 2 筆記錄（exec-004, exec-001）
 
     Example: 成功 - 使用 cursor 分頁
-      When 使用者發送 GET 請求至 "/api/triggers/trg-001/executions":
+      # API: GET /api/v1/agents/{id}/triggers/{trigger_id}/executions
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/triggers/trg-001/executions":
         | cursor | exec-002 |
         | limit  |       10 |
       Then 回傳結果應包含 exec-002 之後（更早）的執行記錄
@@ -77,27 +81,31 @@ Feature: 查詢觸發器執行歷史
   Rule: 支援依條件篩選執行記錄
 
     Example: 成功 - 依狀態篩選
-      When 使用者發送 GET 請求至 "/api/triggers/trg-001/executions":
+      # API: GET /api/v1/agents/{id}/triggers/{trigger_id}/executions
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/triggers/trg-001/executions":
         | status | completed |
       Then 回傳結果應只包含 status 為 "completed" 的記錄
       And total 應為 2
 
     Example: 成功 - 依時間範圍篩選
-      When 使用者發送 GET 請求至 "/api/triggers/trg-001/executions":
+      # API: GET /api/v1/agents/{id}/triggers/{trigger_id}/executions
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/triggers/trg-001/executions":
         | start_date | 2024-01-14 |
         | end_date   | 2024-01-15 |
       Then 回傳結果應只包含指定日期範圍內的執行記錄
       And total 應為 2（exec-001, exec-002）
 
     Example: 成功 - 只查詢失敗的執行
-      When 使用者發送 GET 請求至 "/api/triggers/trg-001/executions":
+      # API: GET /api/v1/agents/{id}/triggers/{trigger_id}/executions
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/triggers/trg-001/executions":
         | status | failed |
       Then 回傳結果應只包含:
         | id       | status |
         | exec-003 | failed |
 
     Example: 成功 - 依觸發類型篩選
-      When 使用者發送 GET 請求至 "/api/agents/agent-001/executions":
+      # API: GET /api/v1/agents/{id}/executions
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/executions":
         | trigger_type | webhook |
       Then 回傳結果應只包含 webhook 類型觸發器的執行記錄
   # ============================================================
@@ -107,7 +115,8 @@ Feature: 查詢觸發器執行歷史
   Rule: 可以查詢單一執行記錄的詳細資訊
 
     Example: 成功 - 查詢執行詳情
-      When 使用者發送 GET 請求至 "/api/executions/exec-001"
+      # API: GET /api/v1/executions/{execution_id}
+      When 使用者發送 GET 請求至 "/api/v1/executions/exec-001"
       Then 請求應成功，回傳狀態碼 200
       And 回傳結果應包含:
         | field             | value               |
@@ -128,7 +137,8 @@ Feature: 查詢觸發器執行歷史
         | total_tokens      |                1500 |
 
     Example: 成功 - 查詢失敗執行的錯誤詳情
-      When 使用者發送 GET 請求至 "/api/executions/exec-003"
+      # API: GET /api/v1/executions/{execution_id}
+      When 使用者發送 GET 請求至 "/api/v1/executions/exec-003"
       Then 回傳結果應包含 error 物件:
         | field   | value             |
         | code    | RUNTIME_ERROR     |
@@ -137,7 +147,8 @@ Feature: 查詢觸發器執行歷史
 
     Example: 成功 - 包含工具調用記錄
       Given 執行記錄 "exec-001" 包含工具調用
-      When 使用者發送 GET 請求至 "/api/executions/exec-001":
+      # API: GET /api/v1/executions/{execution_id}
+      When 使用者發送 GET 請求至 "/api/v1/executions/exec-001":
         | include_tool_calls | true |
       Then 回傳結果應包含 tool_calls 陣列:
         | tool_name  | status  | duration_ms |
@@ -151,18 +162,21 @@ Feature: 查詢觸發器執行歷史
 
     Example: 失敗 - 查詢他人觸發器的執行歷史
       Given Agent "agent-002" 有觸發器 "trg-other"
-      When 使用者 "user-001" 發送 GET 請求至 "/api/triggers/trg-other/executions"
+      # API: GET /api/v1/agents/{id}/triggers/{trigger_id}/executions
+      When 使用者 "user-001" 發送 GET 請求至 "/api/v1/agents/agent-002/triggers/trg-other/executions"
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "You do not have permission to access this trigger"
 
     Example: 失敗 - 查詢不存在的觸發器
-      When 使用者發送 GET 請求至 "/api/triggers/non-existent/executions"
+      # API: GET /api/v1/agents/{id}/triggers/{trigger_id}/executions
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/triggers/non-existent/executions"
       Then 請求應失敗，回傳狀態碼 404
       And 錯誤訊息應為 "Trigger not found"
 
     Example: 成功 - 管理員可查詢任何執行歷史
       Given 使用者 "admin@example.com" 已登入（角色為 admin）
-      When 使用者發送 GET 請求至 "/api/triggers/trg-other/executions"
+      # API: GET /api/v1/agents/{id}/triggers/{trigger_id}/executions
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-002/triggers/trg-other/executions"
       Then 請求應成功
   # ============================================================
   # Rule: 統計資訊
@@ -171,7 +185,8 @@ Feature: 查詢觸發器執行歷史
   Rule: 可以查詢執行統計資訊
 
     Example: 成功 - 查詢觸發器執行統計
-      When 使用者發送 GET 請求至 "/api/triggers/trg-001/stats"
+      # API: GET /api/v1/agents/{id}/triggers/{trigger_id}/stats
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/triggers/trg-001/stats"
       Then 請求應成功
       And 回傳結果應包含:
         | field              | value               |
@@ -186,13 +201,15 @@ Feature: 查詢觸發器執行歷史
         | last_successful_at | 2024-01-15 09:00:00 |
 
     Example: 成功 - 查詢時間範圍內的統計
-      When 使用者發送 GET 請求至 "/api/triggers/trg-001/stats":
+      # API: GET /api/v1/agents/{id}/triggers/{trigger_id}/stats
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/triggers/trg-001/stats":
         | start_date | 2024-01-14 |
         | end_date   | 2024-01-15 |
       Then 統計應只計算指定範圍內的執行記錄
 
     Example: 成功 - 查詢 Agent 層級統計
-      When 使用者發送 GET 請求至 "/api/agents/agent-001/execution-stats"
+      # API: GET /api/v1/agents/{id}/execution-stats
+      When 使用者發送 GET 請求至 "/api/v1/agents/agent-001/execution-stats"
       Then 回傳結果應包含該 Agent 下所有觸發器的彙總統計
   # ============================================================
   # Rule: 日誌查詢
@@ -201,7 +218,8 @@ Feature: 查詢觸發器執行歷史
   Rule: 可以查詢執行過程的詳細日誌
 
     Example: 成功 - 查詢執行日誌
-      When 使用者發送 GET 請求至 "/api/executions/exec-001/logs"
+      # API: GET /api/v1/executions/{execution_id}/logs
+      When 使用者發送 GET 請求至 "/api/v1/executions/exec-001/logs"
       Then 請求應成功
       And 回傳結果應包含執行過程的日誌:
         | timestamp           | level | message                   |
@@ -213,7 +231,8 @@ Feature: 查詢觸發器執行歷史
         | 2024-01-15 09:00:30 | INFO  | Execution completed       |
 
     Example: 成功 - 查詢失敗執行的錯誤日誌
-      When 使用者發送 GET 請求至 "/api/executions/exec-003/logs"
+      # API: GET /api/v1/executions/{execution_id}/logs
+      When 使用者發送 GET 請求至 "/api/v1/executions/exec-003/logs"
       Then 回傳結果應包含錯誤日誌:
         | level | message                    |
         | ERROR | LLM API returned error 500 |
@@ -226,7 +245,8 @@ Feature: 查詢觸發器執行歷史
 
     Example: 成功 - 重新執行失敗的觸發
       Given 執行記錄 "exec-003" 的 status 為 "failed"
-      When 使用者發送 POST 請求至 "/api/executions/exec-003/retry"
+      # API: POST /api/v1/executions/{execution_id}/retry
+      When 使用者發送 POST 請求至 "/api/v1/executions/exec-003/retry"
       Then 請求應成功，回傳狀態碼 202
       And trigger_executions 表應新增一筆記錄:
         | field      | value              |
@@ -238,6 +258,7 @@ Feature: 查詢觸發器執行歷史
 
     Example: 失敗 - 無法重新執行成功的觸發
       Given 執行記錄 "exec-001" 的 status 為 "completed"
-      When 使用者發送 POST 請求至 "/api/executions/exec-001/retry"
+      # API: POST /api/v1/executions/{execution_id}/retry
+      When 使用者發送 POST 請求至 "/api/v1/executions/exec-001/retry"
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Can only retry failed executions"

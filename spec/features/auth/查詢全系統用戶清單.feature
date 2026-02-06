@@ -17,7 +17,8 @@ Feature: 查詢全系統用戶清單
 
     Example: 成功 - 管理員查詢用戶列表
       Given 使用者 "admin@pegatron.com" 已登入（角色為 admin）
-      When 使用者發送 GET 請求至 "/api/admin/users"
+      # API: GET /api/v1/users (Admin Only)
+      When 使用者發送 GET 請求至 "/api/v1/users"
       Then 請求應成功，回傳狀態碼 200
       And 回傳結果應包含所有用戶:
         | id       | email              | full_name    | role  | is_active |
@@ -29,13 +30,15 @@ Feature: 查詢全系統用戶清單
 
     Example: 失敗 - 一般用戶禁止查詢
       Given 使用者 "alice@example.com" 已登入（角色為 user）
-      When 使用者發送 GET 請求至 "/api/admin/users"
+      # API: GET /api/v1/users (Admin Only)
+      When 使用者發送 GET 請求至 "/api/v1/users"
       Then 請求應失敗，回傳狀態碼 403
       And 錯誤訊息應為 "Admin access required"
 
     Example: 失敗 - 未登入禁止查詢
       Given 使用者未登入（無 Authorization 標頭）
-      When 發送 GET 請求至 "/api/admin/users"
+      # API: GET /api/v1/users (Admin Only)
+      When 發送 GET 請求至 "/api/v1/users"
       Then 請求應失敗，回傳狀態碼 401
       And 錯誤訊息應為 "Authorization header is required"
   # ============================================================
@@ -46,7 +49,8 @@ Feature: 查詢全系統用戶清單
 
     Example: 成功 - 預設分頁（第一頁）
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users":
+      # API: GET /api/v1/users?page=1&page_size=2
+      When 使用者發送 GET 請求至 "/api/v1/users":
         | page      | 1 |
         | page_size | 2 |
       Then 請求應成功
@@ -60,7 +64,8 @@ Feature: 查詢全系統用戶清單
 
     Example: 成功 - 查詢最後一頁
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users":
+      # API: GET /api/v1/users?page=3&page_size=2
+      When 使用者發送 GET 請求至 "/api/v1/users":
         | page      | 3 |
         | page_size | 2 |
       Then 請求應成功
@@ -68,13 +73,15 @@ Feature: 查詢全系統用戶清單
 
     Example: 成功 - 預設分頁大小
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users"，不指定分頁參數
+      # API: GET /api/v1/users
+      When 使用者發送 GET 請求至 "/api/v1/users"，不指定分頁參數
       Then 預設 page 應為 1
       And 預設 page_size 應為 20
 
     Example: 失敗 - 分頁參數無效
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users":
+      # API: GET /api/v1/users?page=-1&page_size=200
+      When 使用者發送 GET 請求至 "/api/v1/users":
         | page      |  -1 |
         | page_size | 200 |
       Then 請求應失敗，回傳狀態碼 400
@@ -87,7 +94,8 @@ Feature: 查詢全系統用戶清單
 
     Example: 成功 - 依角色篩選
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users":
+      # API: GET /api/v1/users?role=admin
+      When 使用者發送 GET 請求至 "/api/v1/users":
         | role | admin |
       Then 請求應成功
       And 回傳結果應僅包含角色為 admin 的用戶:
@@ -98,7 +106,8 @@ Feature: 查詢全系統用戶清單
 
     Example: 成功 - 依狀態篩選
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users":
+      # API: GET /api/v1/users?is_active=false
+      When 使用者發送 GET 請求至 "/api/v1/users":
         | is_active | false |
       Then 請求應成功
       And 回傳結果應僅包含:
@@ -107,14 +116,16 @@ Feature: 查詢全系統用戶清單
 
     Example: 成功 - 依關鍵字搜尋（Email 或名稱）
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users":
+      # API: GET /api/v1/users?search=alice
+      When 使用者發送 GET 請求至 "/api/v1/users":
         | search | alice |
       Then 請求應成功
       And 回傳結果應包含 email 或 full_name 含有 "alice" 的用戶
 
     Example: 成功 - 組合篩選條件
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users":
+      # API: GET /api/v1/users?role=user&is_active=true
+      When 使用者發送 GET 請求至 "/api/v1/users":
         | role      | user |
         | is_active | true |
       Then 請求應成功
@@ -130,13 +141,15 @@ Feature: 查詢全系統用戶清單
 
     Example: 預設依建立時間降序
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users"，不指定排序
+      # API: GET /api/v1/users
+      When 使用者發送 GET 請求至 "/api/v1/users"，不指定排序
       Then 回傳結果應依 created_at 降序排列
       And 第一筆應為最近建立的用戶
 
     Example: 成功 - 依名稱升序排序
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users":
+      # API: GET /api/v1/users?sort_by=full_name&order=asc
+      When 使用者發送 GET 請求至 "/api/v1/users":
         | sort_by | full_name |
         | order   | asc       |
       Then 回傳結果應依 full_name 升序排列
@@ -144,7 +157,8 @@ Feature: 查詢全系統用戶清單
 
     Example: 成功 - 依最後登入時間排序
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users":
+      # API: GET /api/v1/users?sort_by=last_login_at&order=desc
+      When 使用者發送 GET 請求至 "/api/v1/users":
         | sort_by | last_login_at |
         | order   | desc          |
       Then 回傳結果應依最近登入時間優先
@@ -156,7 +170,8 @@ Feature: 查詢全系統用戶清單
 
     Example: 回傳欄位應包含必要資訊
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users"
+      # API: GET /api/v1/users
+      When 使用者發送 GET 請求至 "/api/v1/users"
       Then 每筆用戶應包含以下欄位:
         | field         | type     | description               |
         | id            | string   | 用戶 UUID                 |
@@ -170,7 +185,8 @@ Feature: 查詢全系統用戶清單
 
     Example: 回傳欄位不應包含敏感資料
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users"
+      # API: GET /api/v1/users
+      When 使用者發送 GET 請求至 "/api/v1/users"
       Then 每筆用戶不應包含以下欄位:
         | field           |
         | password        |
@@ -184,7 +200,8 @@ Feature: 查詢全系統用戶清單
 
     Example: 成功 - 包含統計資訊
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users":
+      # API: GET /api/v1/users?include_stats=true
+      When 使用者發送 GET 請求至 "/api/v1/users":
         | include_stats | true |
       Then 回傳結果應包含 stats 物件:
         | field          | value |
@@ -201,7 +218,8 @@ Feature: 查詢全系統用戶清單
 
     Example: 記錄查詢行為
       Given 使用者 "admin@pegatron.com" 已登入
-      When 使用者發送 GET 請求至 "/api/admin/users"
+      # API: GET /api/v1/users
+      When 使用者發送 GET 請求至 "/api/v1/users"
       Then 請求應成功
       And audit_logs 表應新增一筆記錄:
         | field       | value                                       |

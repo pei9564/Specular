@@ -16,9 +16,9 @@ Feature: Agent 模式設定
 
     Example: 成功 - 設定為 Chat 模式
       Given Agent "agent-002" 的 mode 為 "triggers"
-      When 使用者 "user-001" 提交編輯請求:
-        | agent_id | agent-002 |
-        | mode     | chat      |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-002":
+        | mode | chat |
       Then 請求應成功，回傳狀態碼 200
       And Agent "agent-002" 的資料應更新為:
         | field      | old_value | new_value  |
@@ -27,7 +27,8 @@ Feature: Agent 模式設定
 
     Example: Chat 模式 Agent 出現在對話列表
       Given Agent "agent-001" 的 mode 為 "chat" 且 status 為 "active"
-      When 使用者 "user-001" 查詢可對話 Agent 列表
+      # API: GET /api/v1/agents?mode=chat&status=active
+      When 使用者 "user-001" 發送 GET 請求至 "/api/v1/agents" 查詢可對話 Agent 列表
       Then 回傳結果應包含 "ChatAgent"
       And 每筆 Agent 應包含:
         | field          | value     |
@@ -37,13 +38,16 @@ Feature: Agent 模式設定
 
     Example: Draft 狀態的 Chat Agent 不出現在對話列表
       Given Agent "agent-003" 的 mode 為 "chat" 且 status 為 "draft"
-      When 使用者 "user-001" 查詢可對話 Agent 列表
+      # API: GET /api/v1/agents?mode=chat&status=active
+      When 使用者 "user-001" 發送 GET 請求至 "/api/v1/agents" 查詢可對話 Agent 列表
       Then 回傳結果不應包含 "DraftAgent"
 
     Example: Chat 模式下 Agent 等待使用者輸入後回應
       Given Agent "agent-001" 為 chat 模式
       And 使用者開啟與 "agent-001" 的對話 session
-      When 使用者發送訊息 "你好"
+      # API: POST /api/v1/agents/{id}/chat
+      When 使用者發送 POST 請求至 "/api/v1/agents/agent-001/chat":
+        | message | 你好 |
       Then 系統應建立 conversation_messages 記錄:
         | field      | value          |
         | session_id | (session UUID) |
@@ -65,21 +69,23 @@ Feature: Agent 模式設定
 
     Example: 成功 - 設定為 Triggers 模式
       Given Agent "agent-001" 的 mode 為 "chat"
-      When 使用者 "user-001" 提交編輯請求:
-        | agent_id | agent-001 |
-        | mode     | triggers  |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | mode | triggers |
       Then 請求應成功
       And Agent "agent-001" 的 mode 應為 "triggers"
       And Agent "agent-001" 應從對話列表中移除
 
     Example: Triggers 模式 Agent 不出現在對話列表
       Given Agent "agent-002" 的 mode 為 "triggers"
-      When 使用者 "user-001" 查詢可對話 Agent 列表
+      # API: GET /api/v1/agents?mode=chat
+      When 使用者 "user-001" 發送 GET 請求至 "/api/v1/agents" 查詢可對話 Agent 列表
       Then 回傳結果不應包含 "TaskAgent"
 
     Example: Triggers 模式 Agent 出現在自動化設定列表
       Given Agent "agent-002" 的 mode 為 "triggers"
-      When 使用者 "user-001" 查詢可設定觸發器的 Agent 列表
+      # API: GET /api/v1/agents?mode=triggers
+      When 使用者 "user-001" 發送 GET 請求至 "/api/v1/agents" 查詢可設定觸發器的 Agent 列表
       Then 回傳結果應包含:
         | id        | name      | mode     |
         | agent-002 | TaskAgent | triggers |
@@ -91,8 +97,8 @@ Feature: Agent 模式設定
 
     Example: 成功 - 配置 Webhook 觸發器
       Given Agent "agent-002" 的 mode 為 "triggers"
-      When 使用者 "user-001" 提交觸發器配置請求:
-        | agent_id     | agent-002                       |
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者 "user-001" 發送 POST 請求至 "/api/v1/agents/agent-002/triggers":
         | trigger_type | webhook                         |
         | config       | {"path": "/api/hook/agent-002"} |
       Then 請求應成功
@@ -103,8 +109,8 @@ Feature: Agent 模式設定
 
     Example: 成功 - 配置排程觸發器 (Cron)
       Given Agent "agent-002" 的 mode 為 "triggers"
-      When 使用者 "user-001" 提交觸發器配置請求:
-        | agent_id     | agent-002                                          |
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者 "user-001" 發送 POST 請求至 "/api/v1/agents/agent-002/triggers":
         | trigger_type | schedule                                           |
         | config       | {"cron": "0 9 * * 1-5", "timezone": "Asia/Taipei"} |
       Then 請求應成功
@@ -114,8 +120,8 @@ Feature: Agent 模式設定
 
     Example: 成功 - 配置事件觸發器
       Given Agent "agent-002" 的 mode 為 "triggers"
-      When 使用者 "user-001" 提交觸發器配置請求:
-        | agent_id     | agent-002                                                 |
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者 "user-001" 發送 POST 請求至 "/api/v1/agents/agent-002/triggers":
         | trigger_type | event                                                     |
         | config       | {"event": "document.uploaded", "filter": {"type": "pdf"}} |
       Then 請求應成功
@@ -125,16 +131,16 @@ Feature: Agent 模式設定
 
     Example: 失敗 - Chat 模式 Agent 無法配置觸發器
       Given Agent "agent-001" 的 mode 為 "chat"
-      When 使用者 "user-001" 提交觸發器配置請求:
-        | agent_id     | agent-001 |
-        | trigger_type | webhook   |
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者 "user-001" 發送 POST 請求至 "/api/v1/agents/agent-001/triggers":
+        | trigger_type | webhook |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Triggers can only be configured for agents in 'triggers' mode"
 
     Example: 失敗 - 無效的 Cron 表達式
       Given Agent "agent-002" 的 mode 為 "triggers"
-      When 使用者 "user-001" 提交觸發器配置請求:
-        | agent_id     | agent-002                |
+      # API: POST /api/v1/agents/{id}/triggers
+      When 使用者 "user-001" 發送 POST 請求至 "/api/v1/agents/agent-002/triggers":
         | trigger_type | schedule                 |
         | config       | {"cron": "invalid-cron"} |
       Then 請求應失敗，回傳狀態碼 400
@@ -147,7 +153,8 @@ Feature: Agent 模式設定
 
     Example: Webhook 觸發執行記錄
       Given Agent "agent-002" 已配置 webhook 觸發器
-      When 外部系統呼叫 webhook "https://api.specular.ai/hook/agent-002":
+      # API: POST /api/v1/webhooks/triggers/{trigger_id}
+      When 外部系統發送 POST 請求至 "/api/v1/webhooks/triggers/{trigger_id}":
         | method  | POST                         |
         | headers | {"X-Custom": "value"}        |
         | body    | {"task": "process document"} |
@@ -188,9 +195,9 @@ Feature: Agent 模式設定
     Example: Chat 切換至 Triggers - 對話 Session 處理
       Given Agent "agent-001" 的 mode 為 "chat"
       And Agent "agent-001" 有 3 個進行中的對話 session
-      When 使用者 "user-001" 提交編輯請求:
-        | agent_id | agent-001 |
-        | mode     | triggers  |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | mode | triggers |
       Then 請求應成功
       And 所有進行中的對話 session 應標記為 "closed"
       And session 的 closed_reason 應為 "agent_mode_changed"
@@ -198,18 +205,18 @@ Feature: Agent 模式設定
     Example: Triggers 切換至 Chat - 觸發器處理
       Given Agent "agent-002" 的 mode 為 "triggers"
       And Agent "agent-002" 有 2 個已配置的觸發器
-      When 使用者 "user-001" 提交編輯請求:
-        | agent_id | agent-002 |
-        | mode     | chat      |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-002":
+        | mode | chat |
       Then 請求應成功
       And 所有觸發器應標記為 "paused"
       And 回傳警告訊息: "2 triggers have been paused. They will resume if you switch back to triggers mode."
 
     Example: 切換回 Triggers - 恢復觸發器
       Given Agent "agent-002" 原本有 2 個 "paused" 狀態的觸發器
-      When 使用者 "user-001" 提交編輯請求:
-        | agent_id | agent-002 |
-        | mode     | triggers  |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-002":
+        | mode | triggers |
       Then 請求應成功
       And 所有 "paused" 狀態的觸發器應恢復為 "active"
   # ============================================================
@@ -219,8 +226,8 @@ Feature: Agent 模式設定
   Rule: 只允許有效的模式值
 
     Example: 失敗 - 無效的模式值
-      When 使用者 "user-001" 提交編輯請求:
-        | agent_id | agent-001    |
-        | mode     | invalid_mode |
+      # API: PUT /api/v1/agents/{id}
+      When 使用者 "user-001" 發送 PUT 請求至 "/api/v1/agents/agent-001":
+        | mode | invalid_mode |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Invalid mode. Allowed values: 'chat', 'triggers'"

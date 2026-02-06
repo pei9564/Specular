@@ -20,7 +20,7 @@ Feature: 編輯 LLM 供應商配置
   Rule: 管理員可以更新模型配置的基本資訊
 
     Example: 成功 - 更新 display_name
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-001":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-001":
         | display_name | GPT-4o (Production) |
       Then 請求應成功，回傳狀態碼 200
       And model_providers 表中 model-001 應更新:
@@ -30,20 +30,20 @@ Feature: 編輯 LLM 供應商配置
         | updated_by   | null      | admin-001           |
 
     Example: 成功 - 更新多個欄位
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-001":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-001":
         | display_name | Updated GPT-4                 |
         | base_url     | https://new-proxy.example.com |
       Then 請求應成功
       And model_providers 表應同時更新 display_name 和 base_url
 
     Example: 失敗 - display_name 與其他配置衝突
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-001":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-001":
         | display_name | Claude 3 |
       Then 請求應失敗，回傳狀態碼 409
       And 錯誤訊息應為 "A model with display_name 'Claude 3' already exists"
 
     Example: 失敗 - 模型不存在
-      When 使用者發送 PATCH 請求至 "/api/admin/models/non-existent":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/non-existent":
         | display_name | New Name |
       Then 請求應失敗，回傳狀態碼 404
       And 錯誤訊息應為 "Model provider not found"
@@ -55,7 +55,7 @@ Feature: 編輯 LLM 供應商配置
 
     Example: 成功 - 更新 API Key
       Given model-001 的 api_key_encrypted 為 (舊加密值)
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-001":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-001":
         | api_key | sk-new-api-key-67890 |
       Then 請求應成功
       And model_providers 表中 model-001 的 api_key_encrypted 應更新為新的加密值
@@ -65,7 +65,7 @@ Feature: 編輯 LLM 供應商配置
       And 回傳結果不應包含 api_key
 
     Example: 成功 - 更新 Key 並測試連線
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-001":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-001":
         | api_key         | sk-new-valid-key |
         | test_connection | true             |
       Then 系統應先測試新 Key 的連線
@@ -73,7 +73,7 @@ Feature: 編輯 LLM 供應商配置
       And 回傳應包含 connection_test: "passed"
 
     Example: 失敗 - 新 Key 連線測試失敗
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-001":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-001":
         | api_key         | sk-invalid-key |
         | test_connection | true           |
       Then 請求應失敗，回傳狀態碼 400
@@ -88,7 +88,7 @@ Feature: 編輯 LLM 供應商配置
     Example: 成功 - 設定新的預設模型
       Given model-001 的 is_default 為 true
       And model-002 的 is_default 為 false
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-002":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-002":
         | is_default | true |
       Then 請求應成功
       And model_providers 表應更新:
@@ -101,14 +101,14 @@ Feature: 編輯 LLM 供應商配置
 
     Example: 成功 - 取消預設（系統無預設模型）
       Given model-001 的 is_default 為 true
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-001":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-001":
         | is_default | false |
       Then 請求應成功
       And model_providers 表中應無 is_default 為 true 的記錄
 
     Example: 失敗 - 無法將停用的模型設為預設
       Given model-004 的 is_active 為 false
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-004":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-004":
         | is_default | true |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Cannot set inactive model as default"
@@ -120,7 +120,7 @@ Feature: 編輯 LLM 供應商配置
 
     Example: 成功 - 停用模型
       Given model-002 的 is_active 為 true
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-002":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-002":
         | is_active | false |
       Then 請求應成功
       And model_providers 表中 model-002 的 is_active 應為 false
@@ -128,7 +128,7 @@ Feature: 編輯 LLM 供應商配置
 
     Example: 成功 - 重新啟用模型
       Given model-004 的 is_active 為 false
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-004":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-004":
         | is_active | true |
       Then 請求應成功
       And model_providers 表中 model-004 的 is_active 應為 true
@@ -138,7 +138,7 @@ Feature: 編輯 LLM 供應商配置
         | agent_id  | model_id  |
         | agent-001 | model-002 |
         | agent-002 | model-002 |
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-002":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-002":
         | is_active | false |
       Then 請求應成功
       And 回傳應包含警告:
@@ -147,7 +147,7 @@ Feature: 編輯 LLM 供應商配置
 
     Example: 失敗 - 停用預設模型需先取消預設
       Given model-001 的 is_default 為 true
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-001":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-001":
         | is_active | false |
       Then 請求應失敗，回傳狀態碼 400
       And 錯誤訊息應為 "Cannot deactivate the default model. Please set another model as default first."
@@ -159,7 +159,7 @@ Feature: 編輯 LLM 供應商配置
 
     Example: 成功 - 更新 Azure OpenAI 的 deployment_name
       Given model-004 為 azure_openai 類型
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-004":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-004":
         | deployment_name | new-deployment     |
         | api_version     | 2024-05-01-preview |
       Then 請求應成功
@@ -175,7 +175,7 @@ Feature: 編輯 LLM 供應商配置
 
     Example: 失敗 - 一般用戶禁止編輯
       Given 使用者 "user@example.com" 已登入（角色為 user）
-      When 使用者發送 PATCH 請求至 "/api/admin/models/model-001":
+      When 使用者發送 PUT 請求至 "/api/v1/llm-models/model-001":
         | display_name | Hacked Name |
       Then 請求應失敗，回傳狀態碼 403
       And model_providers 表中 model-001 應維持不變
