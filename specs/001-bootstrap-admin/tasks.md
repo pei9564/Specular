@@ -20,24 +20,24 @@
 
 ## Phase 1: Setup & Scaffolding
 
-- [ ] T001 Create backend project structure: `app/__init__.py`, `app/core/__init__.py`, `app/models/__init__.py`, `app/services/__init__.py`, `tests/__init__.py`, `tests/steps/__init__.py`
-- [ ] T002 Create `requirements.txt` with dependencies: fastapi, uvicorn, sqlalchemy[asyncio], asyncpg, alembic, pydantic-settings, passlib[bcrypt], structlog, email-validator, pytest, pytest-asyncio, testcontainers[postgres]
-- [ ] T003 Create `.env.example` with documented configuration variables (DATABASE_URL, ADMIN__EMAIL, ADMIN__PASSWORD, ADMIN__FULL_NAME)
-- [ ] T004 Initialize Alembic with async configuration in `alembic/env.py` and `alembic.ini`
+- [x] T001 Create backend project structure: `app/__init__.py`, `app/core/__init__.py`, `app/models/__init__.py`, `app/services/__init__.py`, `tests/__init__.py`, `tests/steps/__init__.py`
+- [x] T002 Create `requirements.txt` with dependencies: fastapi, uvicorn, sqlalchemy[asyncio], asyncpg, alembic, pydantic-settings, passlib[bcrypt], structlog, email-validator, pytest, pytest-asyncio, testcontainers[postgres]
+- [x] T003 Create `.env.example` with documented configuration variables (DATABASE_URL, ADMIN__EMAIL, ADMIN__PASSWORD, ADMIN__FULL_NAME)
+- [x] T004 Initialize Alembic with async configuration in `alembic/env.py` and `alembic.ini`
 
 ---
 
 ## Phase 2: Foundational (Blocking)
 
-- [ ] T005 [P] Implement custom exceptions in `app/core/exceptions.py`: BootstrapValidationError, BootstrapDatabaseError (mapped to appropriate exit codes)
-- [ ] T006 [P] Implement password hashing utilities in `app/core/security.py`: hash_password(), verify_password() using passlib CryptContext with bcrypt scheme
-- [ ] T007 [P] Implement AppSettings and AdminBootstrapSettings with validators in `app/core/config.py`: EmailStr validation, password strength validator (min 12 chars, mixed case, digit, special char), env_nested_delimiter="__"
-- [ ] T008 Implement async database engine, session factory, and get_db dependency in `app/core/database.py`
-- [ ] T009 [P] Configure structlog with JSON renderer and password redaction processor in `app/core/logging.py`
-- [ ] T010 Create SQLAlchemy declarative Base in `app/models/base.py` and re-export in `app/models/__init__.py`
-- [ ] T011 Implement User ORM model in `app/models/user.py` per data-model.md schema (depends on T010)
-- [ ] T012 Implement AuditLog ORM model in `app/models/audit_log.py` per data-model.md schema (depends on T010)
-- [ ] T013 Generate Alembic initial migration for users and audit_logs tables: `alembic revision --autogenerate -m "create users and audit_logs tables"`
+- [x] T005 [P] Implement custom exceptions in `app/core/exceptions.py`: BootstrapValidationError, BootstrapDatabaseError (mapped to appropriate exit codes)
+- [x] T006 [P] Implement password hashing utilities in `app/core/security.py`: hash_password(), verify_password() using passlib CryptContext with bcrypt scheme
+- [x] T007 [P] Implement AppSettings and AdminBootstrapSettings with validators in `app/core/config.py`: EmailStr validation, password strength validator (min 12 chars, mixed case, digit, special char), env_nested_delimiter="__"
+- [x] T008 Implement async database engine, session factory, and get_db dependency in `app/core/database.py`
+- [x] T009 [P] Configure structlog with JSON renderer and password redaction processor in `app/core/logging.py`
+- [x] T010 Create SQLAlchemy declarative Base in `app/models/base.py` and re-export in `app/models/__init__.py`
+- [x] T011 Implement User ORM model in `app/models/user.py` per data-model.md schema (depends on T010)
+- [x] T012 Implement AuditLog ORM model in `app/models/audit_log.py` per data-model.md schema (depends on T010)
+- [x] T013 Generate Alembic initial migration for users and audit_logs tables: `alembic revision --autogenerate -m "create users and audit_logs tables"`
 
 ---
 

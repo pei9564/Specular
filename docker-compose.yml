@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: specular
+      POSTGRES_PASSWORD: specular
+      POSTGRES_DB: specular
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U specular"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://specular:specular@db:5432/specular
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+  test:
+    build: .
+    command: pytest tests/ -v
+    environment:
+      DATABASE_URL: postgresql+asyncpg://specular:specular@db:5432/specular
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+volumes:
+  pgdata:
