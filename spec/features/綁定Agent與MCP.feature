@@ -79,3 +79,12 @@ Feature: 綁定 Agent 與 MCP
       When 使用者進行綁定
       Then 綁定應成功但回傳衝突警告
       And 系統應明確規範工具調用的優先順序（例如後綁定者優先）
+
+  # Clarification 2026-02-10: MCP Server 刪除時自動級聯刪除所有相關綁定。
+  Rule: MCP Server 被刪除時應級聯移除所有綁定
+
+    Example: 級聯刪除 - MCP Server 刪除後綁定自動移除
+      Given Agent "agent-001" 已綁定 MCP "WeatherService"
+      When "WeatherService" 被刪除
+      Then agent_mcp_bindings 表中所有關聯 "WeatherService" 的記錄應被移除
+      And Agent "agent-001" 的可用工具列表不應再包含 WeatherService 的工具

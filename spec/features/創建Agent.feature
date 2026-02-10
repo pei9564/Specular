@@ -111,3 +111,17 @@ Feature: 創建 Agent
       When 該使用者嘗試創建第 6 個 Agent
       Then 創建應失敗
       And 錯誤訊息應提示已達配額上限
+
+  # Clarification 2026-02-10: Agent lifecycle is active/deleted only.
+  # Deletion is soft-delete (record remains in DB with status=deleted, excluded from queries).
+  Rule: Agent 僅支援 active 與 deleted 兩種狀態（軟刪除）
+
+    Example: 名稱唯一性檢查應忽略已刪除的 Agent
+      Given 系統中存在已軟刪除的 Agent "OldBot" (status=deleted)
+      When 使用者嘗試創建名稱為 "OldBot" 的 Agent
+      Then Agent "OldBot" 應成功建立（新記錄，status=active）
+
+    Example: 已刪除的 Agent 不應出現在查詢結果中
+      Given Agent "DeletedBot" 已被軟刪除
+      When 使用者查詢 Agent 列表
+      Then 結果不應包含 "DeletedBot"

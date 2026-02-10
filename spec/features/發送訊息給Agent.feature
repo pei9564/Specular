@@ -3,7 +3,8 @@ Feature: 發送訊息給 Agent
 
   Background:
     Given Agent "ChatBot" (id: agent-001) 處於 active 狀態
-    And 該 Agent 綁定了一組 Skill (calculate) 和一組 MCP (get_weather)
+    # Clarification 2026-02-10: Skills are out-of-scope for MVP; only MCP tools are supported.
+    And 該 Agent 綁定了 MCP 工具 (get_weather)
     And 使用者 "user-001" 已建立與該 Agent 的會話 "conv-001"
 
   Rule: 用戶可以發送訊息並接收 Agent 回應
@@ -58,15 +59,6 @@ Feature: 發送訊息給 Agent
       Then 系統應回傳 RunError 事件
 
   Rule: Agent 可以調用綁定的工具（Skills/MCP）
-
-    Example: 成功 - Agent 調用 Skill
-      When 使用者請求 "請幫我計算 123 + 456"
-      Then Agent 應識別並調用 calculate 函數
-      And tool_calls 表應記錄該次調用:
-        | tool_type | skill     |
-        | tool_name | calculate |
-        | status    | success   |
-      And Agent 最終回應應包含計算結果
 
     Example: 成功 - Agent 調用 MCP 工具
       When 使用者請求 "台北今天天氣如何？"

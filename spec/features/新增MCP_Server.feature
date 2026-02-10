@@ -92,10 +92,17 @@ Feature: 新增 MCP Server
       When 新增 stdio 類型 MCP Server 未提供 command
       Then 新增應失敗
 
-    Example: 失敗 - 名稱重複
-      Given 已存在名為 "Weather Service" 的 MCP Server
-      When 嘗試新增同名 MCP Server
+    # Clarification 2026-02-10: MCP Server 名稱唯一性為 per-user 範圍，不同使用者可擁有同名 Server。
+    Example: 失敗 - 同一使用者名稱重複
+      Given 使用者已擁有名為 "Weather Service" 的 MCP Server
+      When 該使用者嘗試新增同名 MCP Server
       Then 新增應失敗
+
+    Example: 成功 - 不同使用者可擁有同名 MCP Server
+      Given 使用者 "user-A" 擁有名為 "Weather Service" 的 MCP Server
+      And 使用者 "user-B" 已登入
+      When "user-B" 新增名為 "Weather Service" 的 MCP Server
+      Then 新增應成功
 
   Rule: 用戶的 MCP Server 數量有限制
 
