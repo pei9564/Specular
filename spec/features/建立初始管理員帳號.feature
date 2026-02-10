@@ -13,6 +13,7 @@ Feature: 建立初始管理員帳號
         | full_name | System Administrator |
         | role      | admin                |
         | is_active | true                 |
+      And 系統應自動產生隨機 16 字元密碼作為預設密碼
       And 系統日誌應記錄初始帳號建立事件
       And 系統日誌應警告使用預設密碼
 
@@ -40,6 +41,7 @@ Feature: 建立初始管理員帳號
       When 系統啟動
       Then 系統應啟動失敗並提示 Email 格式錯誤
 
+    # 密碼規則: 至少 12 字元、含大小寫英文字母、數字、特殊字元
     Example: 失敗 - 密碼強度不足
       Given 系統資料庫 users 表為空
       And 配置了強度不足的密碼
