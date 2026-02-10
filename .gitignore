@@ -2,6 +2,7 @@ prompts
 .clarify/
 spec.md
 .vscode/
+.claude
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
