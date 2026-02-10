@@ -1,109 +1,100 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: [FEATURE NAME]
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `spec/features/[FEATURE_NAME].feature`
+**Branch**: `[###-feature-name]` | **Date**: [DATE]
+**Source Feature**: `{{ path_to_feature_file }}`
+> **CRITICAL**: This plan is strictly based on the Scenarios and Rules defined in the Gherkin source above. No external spec.md is used.
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+## Constitution Check (The 7 Commandments)
+*GATE: Must pass before proceeding. If any item is unchecked, STOP and fix.*
 
-## Summary
-
-[Extract from feature spec: primary requirement + technical approach from research]
+- [ ] **I. Gherkin is King**: Plan traces directly to `.feature` scenarios.
+- [ ] **II. Surgical Precision**: Changes are scoped; minimal diffs; no "drive-by" refactoring.
+- [ ] **III. Plug-and-Play**: Logic encapsulated in Service Objects/Modules; Controllers are thin.
+- [ ] **IV. Las Vegas Rule**: External calls (HTTP/DB) are isolated and strategy for Mocking is defined.
+- [ ] **V. Modern Python**: Type hints on ALL signatures; Pydantic for DTOs; PEP 8 compliant.
+- [ ] **VI. Context-Aware**: Framework (FastAPI/Django/Flask) detected and conventions respected.
+- [ ] **VII. Defensive Coding**: Error handling defined (no bare `except`); Custom Exceptions used.
 
 ## Technical Context
+**Framework Detected**: [e.g., FastAPI / Django / Flask or NEEDS CLARIFICATION]
+**Async Requirement**: [Yes/No - based on Framework (e.g. FastAPI = Yes)]
+**New Dependencies**: [List new libs to add to requirements.txt or N/A]
+**Existing Components**: [List existing Services/Models to be reused]
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
+---
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+## 1. Architecture & Design
+> *Rule III: Plug-and-Play Architecture*
 
-## Constitution Check
+* **Summary**: [Brief description of the implementation strategy]
+* **New Components**:
+    * `[Service/Module Name]`: [Responsibility]
+* **Modified Components**:
+    * `[File Path]`: [Change description]
+* **Data Flow**: [Describe how data moves: API -> Service -> DB]
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+## 2. Interface Contract (API & Methods)
+> *Rule V: Modern Pythonic Standards (Type Hints & Pydantic)*
 
-- [ ] **I. Gherkin is King**: Implementation traces to `.feature` scenarios; no separate spec.md created
-- [ ] **II. Surgical Precision**: Changes scoped to this feature only; no unrelated modifications
-- [ ] **III. Plug-and-Play**: New logic in new modules/services; controllers remain thin
-- [ ] **IV. Las Vegas Rule**: All external dependencies injectable and mocked in tests
-- [ ] **V. Pythonic Standards**: Type hints, Pydantic models, async/await for I/O
-- [ ] **VI. Context-Aware**: Framework detected; patterns match installed dependencies
+#### A. API Endpoints (if applicable)
+```python
+# [Method] [https://www.merriam-webster.com/dictionary/path](https://www.merriam-webster.com/dictionary/path)
+# async def endpoint_name(payload: Schema) -> ResponseSchema:
 
-## Project Structure
-
-### Documentation (this feature)
-
-```text
-specs/[###-feature]/
-├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
-### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
+#### B. Core Service Methods
 
-```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+```python
+# class ServiceName:
+#     def method_name(self, arg: int) -> str:
+#         """Docstring explaining logic"""
 
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+## 3. Data Model Changes
+
+> *Rule V: Pydantic Models & DB Schemas*
+
+* **Database Schema**: [SQLAlchemy/ORM changes or N/A]
+* **Pydantic Models (DTOs)**:
+```python
+# class UserRequest(BaseModel):
+#     username: str
+
+```
+
+## 4. Step Definitions Mapping
+
+> *Rule I: Gherkin is King - Connect Scenarios to Code*
+
+| Gherkin Step | Target Python Function/Method |
+| --- | --- |
+| `Given [precondition]` | `tests/steps/[file].py :: [function]` |
+| `When [action]` | `app/services/[service].py :: [method]` |
+| `Then [outcome]` | `tests/steps/[file].py :: [assertion]` |
+
+## 5. Verification Strategy
+
+> *Rule IV: Las Vegas Rule (Isolation & Mocking)*
+
+* **Unit Tests**:
+* Target: `[Service Class]`
+* Mocks: `[External API / DB Session]` (How will these be injected?)
+
+
+* **Integration Tests**:
+* Target: `[API Endpoint]`
+* Scenarios covered: `[Scenario Names]`
+
+
+
+---
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
+> *Fill ONLY if Constitution principles are violated for justifiable reasons*
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| --- | --- | --- |
+| [e.g. No Type Hints] | [e.g. Circular dependency issue] | [Refactoring takes too long] |

@@ -1,115 +1,50 @@
-# Feature Specification: [FEATURE NAME]
+# language: en
+@wip
+Feature: [FEATURE NAME]
+  As a [User Role]
+  I want to [Action]
+  So that [Benefit/Value]
 
-**Feature Branch**: `[###-feature-name]`  
-**Created**: [DATE]  
-**Status**: Draft  
-**Input**: User description: "$ARGUMENTS"
+  # Constitution Rule I: This file is the Single Source of Truth.
+  # Constitution Rule IV: Scenarios implying external calls must be mockable.
 
-## User Scenarios & Testing *(mandatory)*
+  Background:
+    Given the following initial state:
+      | entity | status |
+      | user   | active |
+      # (Add strictly necessary background data)
 
-<!--
-  IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
-  Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
-  you should still have a viable MVP (Minimum Viable Product) that delivers value.
-  
-  Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
-  Think of each story as a standalone slice of functionality that can be:
-  - Developed independently
-  - Tested independently
-  - Deployed independently
-  - Demonstrated to users independently
--->
+  Rule: [Business Rule 1 - e.g., Valid Inputs]
+    
+    Scenario: [Happy Path Scenario Name]
+      Given [Context]
+      When [Action]
+      Then [Expected Outcome]
+      And [Database/State Effect]
 
-### User Story 1 - [Brief Title] (Priority: P1)
+    Scenario Outline: [Data Variations]
+      Given input is "<input>"
+      When processed
+      Then result is "<result>"
 
-[Describe this user journey in plain language]
+      Examples:
+        | input | result |
+        | A     | OK     |
+        | B     | OK     |
 
-**Why this priority**: [Explain the value and why it has this priority level]
+  Rule: [Business Rule 2 - e.g., Error Handling / Edge Cases]
+    
+    Scenario: [Sad Path - e.g., Resource Not Found]
+      Given [Context with missing resource]
+      When [Action]
+      Then I should receive a "404 Not Found" error
+      And no data should be persisted
 
-**Independent Test**: [Describe how this can be tested independently - e.g., "Can be fully tested by [specific action] and delivers [specific value]"]
+    Scenario: [Sad Path - e.g., External Service Failure]
+      # Remember Rule IV: Las Vegas Rule (Mocking)
+      Given the external "PaymentGateway" is down
+      When [Action]
+      Then I should receive a "Service Unavailable" error
+      And the transaction should be rolled back
 
-**Acceptance Scenarios**:
-
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
-2. **Given** [initial state], **When** [action], **Then** [expected outcome]
-
----
-
-### User Story 2 - [Brief Title] (Priority: P2)
-
-[Describe this user journey in plain language]
-
-**Why this priority**: [Explain the value and why it has this priority level]
-
-**Independent Test**: [Describe how this can be tested independently]
-
-**Acceptance Scenarios**:
-
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
-
----
-
-### User Story 3 - [Brief Title] (Priority: P3)
-
-[Describe this user journey in plain language]
-
-**Why this priority**: [Explain the value and why it has this priority level]
-
-**Independent Test**: [Describe how this can be tested independently]
-
-**Acceptance Scenarios**:
-
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
-
----
-
-[Add more user stories as needed, each with an assigned priority]
-
-### Edge Cases
-
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right edge cases.
--->
-
-- What happens when [boundary condition]?
-- How does system handle [error scenario]?
-
-## Requirements *(mandatory)*
-
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right functional requirements.
--->
-
-### Functional Requirements
-
-- **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
-- **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
-- **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
-- **FR-005**: System MUST [behavior, e.g., "log all security events"]
-
-*Example of marking unclear requirements:*
-
-- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
-- **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
-
-### Key Entities *(include if feature involves data)*
-
-- **[Entity 1]**: [What it represents, key attributes without implementation]
-- **[Entity 2]**: [What it represents, relationships to other entities]
-
-## Success Criteria *(mandatory)*
-
-<!--
-  ACTION REQUIRED: Define measurable success criteria.
-  These must be technology-agnostic and measurable.
--->
-
-### Measurable Outcomes
-
-- **SC-001**: [Measurable metric, e.g., "Users can complete account creation in under 2 minutes"]
-- **SC-002**: [Measurable metric, e.g., "System handles 1000 concurrent users without degradation"]
-- **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
-- **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
+  # Add more Rules and Scenarios as needed based on the user request.

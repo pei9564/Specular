@@ -1,23 +1,15 @@
 <!--
   Sync Impact Report
   ==================
-  Version change: 0.0.0 (template) → 1.0.0
-  Modified principles: N/A (initial ratification)
+  Version change: 1.0.0 → 1.1.0 (MINOR: new principle added)
+  Modified principles: None
   Added sections:
-    - I. Gherkin is King (Single Source of Truth)
-    - II. Surgical Precision (Team Collaboration)
-    - III. Plug-and-Play Architecture (Modularity)
-    - IV. The "Las Vegas" Rule (Service Isolation & Mocking)
-    - V. Modern Pythonic Standards
-    - VI. Context-Aware Adaptability
-    - Development Workflow
-    - Quality Gates
-    - Governance
-  Removed sections: All template placeholders replaced
+    - VII. Defensive Coding & Error Handling
+  Removed sections: None
   Templates requiring updates:
-    - .specify/templates/plan-template.md: ⚠ pending (spec.md reference → .feature reference)
+    - .specify/templates/plan-template.md: ✅ updated (VII gate added to Constitution Check)
     - .specify/templates/spec-template.md: ✅ no update needed (unused per Principle I)
-    - .specify/templates/tasks-template.md: ⚠ pending (spec.md prerequisite → .feature prerequisite)
+    - .specify/templates/tasks-template.md: ✅ no update needed
     - .specify/templates/agent-file-template.md: ✅ no update needed
   Follow-up TODOs: None
 -->
@@ -105,6 +97,19 @@ scanning `requirements.txt`, `pyproject.toml`, or `Pipfile`.
 - Generated code MUST NOT introduce patterns that conflict with the
   project's installed dependencies or established conventions.
 
+### VII. Defensive Coding & Error Handling
+
+Errors MUST be visible, structured, and actionable.
+
+- Bare `try...except` blocks that swallow errors are PROHIBITED. Every
+  caught exception MUST be logged with a full stack trace.
+- Microservice code MUST use custom exception classes that map to HTTP
+  status codes (e.g., `ResourceNotFound` → 404,
+  `PermissionDenied` → 403, `ValidationError` → 422).
+- **Stop-Loss Rule**: If a task fails (Red light) more than 3 times
+  during implementation, work MUST stop and human guidance MUST be
+  requested. Infinite fix-break loops are PROHIBITED.
+
 ## Development Workflow
 
 1. **Spec phase**: Author or update the `.feature` file in
@@ -138,4 +143,4 @@ scanning `requirements.txt`, `pyproject.toml`, or `Pipfile`.
 - Complexity beyond what a principle allows MUST be justified in the
   plan's Complexity Tracking table.
 
-**Version**: 1.0.0 | **Ratified**: 2026-02-10 | **Last Amended**: 2026-02-10
+**Version**: 1.1.0 | **Ratified**: 2026-02-10 | **Last Amended**: 2026-02-10
