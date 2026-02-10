@@ -1,0 +1,22 @@
+# Bootstrap Admin — No API endpoints
+# This feature is an internal lifecycle event triggered at application startup.
+# There are no REST API endpoints for this feature.
+#
+# Internal Service Contract:
+#
+# BootstrapAdminService.execute() -> BootstrapResult
+#   - Called from FastAPI lifespan context manager
+#   - Checks if users table is empty
+#   - Creates admin user if no users exist
+#   - Skips if users already exist
+#   - Returns result indicating action taken
+#
+# Configuration (via environment variables / pydantic-settings):
+#   ADMIN_EMAIL:    EmailStr  (default: "admin@pegatron.com")
+#   ADMIN_PASSWORD: str|None  (default: None → auto-generated)
+#   ADMIN_FULLNAME: str       (default: "System Administrator")
+#
+# Error conditions (all cause startup failure):
+#   - Invalid ADMIN_EMAIL format → SystemExit(1)
+#   - ADMIN_PASSWORD too weak → SystemExit(1)
+#   - Database unreachable → SystemExit(1)
