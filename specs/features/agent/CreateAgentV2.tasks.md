@@ -18,8 +18,8 @@
 
 > *Goal: Initialize project skeleton so all imports resolve.*
 
-- [ ] T001 Create project package structure with `__init__.py` files for `app/`, `app/schemas/`, `app/services/`, `app/repositories/`, `app/routers/`, `app/middleware/`, `tests/`, `tests/unit/`, `tests/integration/`
-- [ ] T002 Create custom exception classes in `app/exceptions.py` — `ResourceNotFound(404)`, `DuplicateResource(409)`, `InvalidState(400)`, `PermissionDenied(403)`, `QuotaExceeded(429)`, `ValidationError(422)` per Plan Section 7 / Constitution VII
+- [x] T001 Create project package structure with `__init__.py` files for `app/`, `app/schemas/`, `app/services/`, `app/repositories/`, `app/routers/`, `app/middleware/`, `tests/`, `tests/unit/`, `tests/integration/`
+- [x] T002 Create custom exception classes in `app/exceptions.py` — `ResourceNotFound(404)`, `DuplicateResource(409)`, `InvalidState(400)`, `PermissionDenied(403)`, `QuotaExceeded(429)`, `ValidationError(422)` per Plan Section 7 / Constitution VII
 
 ---
 
@@ -27,11 +27,11 @@
 
 > *Goal: Schemas, repository interfaces, and router skeleton — all tests can import without error.*
 
-- [ ] T003 [P] Create Pydantic schemas in `app/schemas/agent.py` — `ModelConfigSchema`, `MemoryConfigSchema`, `CreateAgentV2Request` (with validators: name format, mode enum, mcp_server_ids uniqueness), `BoundMcpServerSchema`, `CreateAgentV2Response` per Plan Section 2
-- [ ] T004 [P] Create `AgentRepository` interface in `app/repositories/agent_repository.py` — methods: `find_active_by_name`, `count_by_owner`, `create_agent`, `create_agent_mcp_bindings` per Plan Section 3
-- [ ] T005 [P] Create `McpRepository` interface in `app/repositories/mcp_repository.py` — methods: `find_by_id`, `find_by_ids` per Plan Section 3
-- [ ] T006 [P] Create `AgentService` skeleton in `app/services/agent_service.py` — constructor accepts `AgentRepository` + `McpRepository` via DI; method `create_agent_v2(user_id, req)` raises `NotImplementedError` per Plan Section 3
-- [ ] T007 Create `POST /api/agents` route in `app/routers/agent_router.py` — thin delegation to `AgentService.create_agent_v2()`, inject service via `Depends()`, return 201 on success per Plan Section 1
+- [x] T003 [P] Create Pydantic schemas in `app/schemas/agent.py` — `ModelConfigSchema`, `MemoryConfigSchema`, `CreateAgentV2Request` (with validators: name format, mode enum, mcp_server_ids uniqueness), `BoundMcpServerSchema`, `CreateAgentV2Response` per Plan Section 2
+- [x] T004 [P] Create `AgentRepository` interface in `app/repositories/agent_repository.py` — methods: `find_active_by_name`, `count_by_owner`, `create_agent`, `create_agent_mcp_bindings` per Plan Section 3
+- [x] T005 [P] Create `McpRepository` interface in `app/repositories/mcp_repository.py` — methods: `find_by_id`, `find_by_ids` per Plan Section 3
+- [x] T006 [P] Create `AgentService` skeleton in `app/services/agent_service.py` — constructor accepts `AgentRepository` + `McpRepository` via DI; method `create_agent_v2(user_id, req)` raises `NotImplementedError` per Plan Section 3
+- [x] T007 Create `POST /api/agents` route in `app/routers/agent_router.py` — thin delegation to `AgentService.create_agent_v2()`, inject service via `Depends()`, return 201 on success per Plan Section 1
 
 ---
 
@@ -43,9 +43,9 @@
 >
 > **Independent test criteria**: Given valid inputs and existing active MCP Servers, calling `POST /api/agents` with `mcp_server_ids` returns 201 with Agent + bound MCP list. Without `mcp_server_ids`, returns 201 with empty `mcp_servers` array.
 
-- [ ] T008 [US1] Create unit test file `tests/unit/test_agent_service.py` — test happy-path scenarios: (1) create with MCP binding returns response with 2 bound servers, (2) create without MCP returns empty mcp_servers, (3) enabled defaults to true, (4) triggers mode persists. Mock `AgentRepository` and `McpRepository` per Plan Section 4
-- [ ] T009 [US1] Implement `AgentService.create_agent_v2()` happy path in `app/services/agent_service.py` — steps: permission check → quota check → name uniqueness → model validation → MCP lookup (if any) → insert Agent → insert AgentMcpServers → build response. Apply defaults: `status=active`, `model_config={temperature:0.7, max_tokens:4096}`, `memory_config={type:"in_memory"}` per Plan Section 3
-- [ ] T010 [US1] Run unit tests for US1 happy path — `pytest tests/unit/test_agent_service.py -k "happy"` — MUST PASS
+- [x] T008 [US1] Create unit test file `tests/unit/test_agent_service.py` — test happy-path scenarios: (1) create with MCP binding returns response with 2 bound servers, (2) create without MCP returns empty mcp_servers, (3) enabled defaults to true, (4) triggers mode persists. Mock `AgentRepository` and `McpRepository` per Plan Section 4
+- [x] T009 [US1] Implement `AgentService.create_agent_v2()` happy path in `app/services/agent_service.py` — steps: permission check → quota check → name uniqueness → model validation → MCP lookup (if any) → insert Agent → insert AgentMcpServers → build response. Apply defaults: `status=active`, `llm_config={temperature:0.7, max_tokens:4096}`, `memory_config={type:"in_memory"}` per Plan Section 3
+- [x] T010 [US1] Run unit tests for US1 happy path — `pytest tests/unit/test_agent_service.py -k "happy"` — MUST PASS
 
 ---
 
@@ -57,9 +57,9 @@
 >
 > **Independent test criteria**: Requests with non-existent, inactive, or duplicate MCP IDs return 400/404 with descriptive error. No Agent or binding records created.
 
-- [ ] T011 [US2] Add unit tests for MCP validation failures in `tests/unit/test_agent_service.py` — test: (1) non-existent mcp_id → `ResourceNotFound`, (2) inactive mcp status → `InvalidState`, (3) duplicate mcp_ids → `ValidationError` (caught at schema level). Mock `McpRepository.find_by_ids` to return partial/mismatched results per Plan Section 4
-- [ ] T012 [US2] Implement MCP validation logic in `app/services/agent_service.py` within `create_agent_v2()` — after model validation, before DB insert: call `mcp_repo.find_by_ids(req.mcp_server_ids)`, check all IDs found, check all statuses are "active". Raise `ResourceNotFound` or `InvalidState` with specific mcp_id in message
-- [ ] T013 [US2] Run unit tests for US2 — `pytest tests/unit/test_agent_service.py -k "mcp_validation"` — MUST PASS
+- [x] T011 [US2] Add unit tests for MCP validation failures in `tests/unit/test_agent_service.py` — test: (1) non-existent mcp_id → `ResourceNotFound`, (2) inactive mcp status → `InvalidState`, (3) duplicate mcp_ids → `ValidationError` (caught at schema level). Mock `McpRepository.find_by_ids` to return partial/mismatched results per Plan Section 4
+- [x] T012 [US2] Implement MCP validation logic in `app/services/agent_service.py` within `create_agent_v2()` — after model validation, before DB insert: call `mcp_repo.find_by_ids(req.mcp_server_ids)`, check all IDs found, check all statuses are "active". Raise `ResourceNotFound` or `InvalidState` with specific mcp_id in message
+- [x] T013 [US2] Run unit tests for US2 — `pytest tests/unit/test_agent_service.py -k "mcp_validation"` — MUST PASS
 
 ---
 
@@ -71,8 +71,17 @@
 >
 > **Independent test criteria**: When MCP validation fails, querying Agents table for the requested name returns zero results. AgentMcpServers table has no orphaned records.
 
-- [ ] T014 [US3] Add unit test for atomicity in `tests/unit/test_agent_service.py` — test: valid agent data + invalid mcp_id → exception raised, assert `agent_repo.create_agent` was NOT called, assert `agent_repo.create_agent_mcp_bindings` was NOT called (fail-fast before DB writes)
-- [ ] T015 [US3] Verify fail-fast ordering in `app/services/agent_service.py` — MCP validation MUST execute before any `create_agent` call. No code change needed if T012 implemented correctly; this is a verification task. Run `pytest tests/unit/test_agent_service.py -k "atomicity"` — MUST PASS
+- [x] T014 [US3] Add unit test for atomicity in `tests/unit/test_agent_service.py` — test: valid agent data + invalid mcp_id → exception raised, assert `agent_repo.create_agent` was NOT called, assert `agent_repo.create_agent_mcp_bindings` was NOT called (fail-fast before DB writes)
+- [x] T015 [US3] Verify fail-fast ordering in `app/services/agent_service.py` — MCP validation MUST execute before any `create_agent` call. No code change needed if T012 implemented correctly; this is a verification task. Run `pytest tests/unit/test_agent_service.py -k "atomicity"` — MUST PASS
+
+---
+
+## Phase 5.5: ISA-Map Integration Tests
+
+> *Goal: BDD integration tests wired from Gherkin scenarios via ISA patterns.*
+
+- [x] T019 [ISA-Map] Generate `tests/integration/test_create_agent_v2.py` — pytest-bdd step definitions mapped from `CreateAgentV2.feature` using ISA patterns (API_CALL → POST /api/agents, API_ASSERT → status/body checks, DB_ASSERT → repository assertions, MOCK_SETUP → Given mock data). Covers all 8 Gherkin scenarios.
+- [x] T020 [ISA-Map] Run BDD integration tests — `pytest tests/integration/test_create_agent_v2.py -v` — ALL tests MUST PASS
 
 ---
 
@@ -80,9 +89,9 @@
 
 > *Goal: Type safety, linting, and full test suite pass.*
 
-- [ ] T016 Run full test suite — `pytest tests/ -v` — ALL tests MUST PASS (Green)
-- [ ] T017 Run type check — `mypy app/` — no errors
-- [ ] T018 Verify OpenAPI contract alignment — compare router response schema against `specs/features/agent/contracts/create-agent-v2.yaml`, ensure all fields and status codes match
+- [x] T016 Run full test suite — `pytest tests/ -v` — ALL tests MUST PASS (Green)
+- [x] T017 Run type check — `mypy app/` — no errors
+- [x] T018 Verify OpenAPI contract alignment — compare router response schema against `specs/features/agent/contracts/create-agent-v2.yaml`, ensure all fields and status codes match
 
 ---
 

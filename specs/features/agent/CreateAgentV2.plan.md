@@ -61,7 +61,7 @@ paths:
         '409':
           description: "Agent name already exists"
         '422':
-          description: "Invalid parameters (temperature, model_config)"
+          description: "Invalid parameters (temperature, llm_config)"
         '429':
           description: "Agent quota exceeded"
 
@@ -83,7 +83,7 @@ components:
           type: string
           enum: [chat, triggers]
           default: chat
-        model_config:
+        llm_config:
           type: object
           properties:
             temperature:
@@ -128,7 +128,7 @@ components:
           type: string
         system_prompt:
           type: string
-        model_config:
+        llm_config:
           type: object
         memory_config:
           type: object
@@ -188,7 +188,7 @@ class CreateAgentV2Request(BaseModel):
     system_prompt: Optional[str] = None
     model_id: str
     mode: str = Field(default="chat")  # chat | triggers
-    model_config_: Optional[ModelConfigSchema] = Field(default=None, alias="model_config")
+    llm_config: Optional[ModelConfigSchema] = None
     memory_config: Optional[MemoryConfigSchema] = None
     mcp_server_ids: list[str] = Field(default_factory=list)
 
@@ -229,7 +229,7 @@ class CreateAgentV2Response(BaseModel):
     mode: str
     model_id: str
     system_prompt: Optional[str]
-    model_config: dict
+    llm_config: dict
     memory_config: dict
     mcp_servers: list[BoundMcpServerSchema]
     created_at: str
@@ -360,7 +360,7 @@ class McpRepository:
 ## 5. ISA Mapping (Test Generation Guide)
 
 > **Instruction**: Map Gherkin Phrases to ISA Patterns.
-> This section guides `/speckit.tasks` in generating `tests/steps/`.
+> This section guides `/speckit.tasks` in generating `tests/integration/`.
 
 | Gherkin Phrase | ISA Pattern | Target Implementation |
 |----------------|-------------|----------------------|
