@@ -1,53 +1,51 @@
-# Implementation Tasks: [FEATURE NAME]
+# Implementation Tasks
 
-**Source Plan**: `specs/[feature_name]/plan.md`
-**Source Feature**: `{{ path_to_feature_file }}`
+**Source Plan**: `{{ path_to_plan_file }}`
+**ISA Config**: `.specify/config/isa.yml`
 
-> **Constitution Enforcement**:
+## Phase 1: Structure & Skeletons (The Foundation)
 >
-> 1. **Surgical Precision**: Only touch files listed in the Plan.
-> 2. **Las Vegas Rule**: Tasks MUST include "Mocking" steps for external dependencies.
-> 3. **Red-Green-Refactor**: Tests must be written (and fail) BEFORE implementation code.
+> *Goal: Create files so tests can import/reference them.*
 
-## Phase 1: Preparation & Scaffolding
+- [ ] **[Skeleton]** Create `app/schemas/{{ domain }}.py`.
+  - *Action*: Port Pydantic models from **Plan Section 2**.
+- [ ] **[Skeleton]** Create `app/services/{{ domain }}_service.py`.
+  - *Action*: Port Class/Method signatures from **Plan Section 3** (keep `NotImplementedError`).
+- [ ] **[Skeleton]** Create `app/routers/{{ domain }}.py`.
+  - *Action*: Define FastAPI route per **Plan Section 1** (Inject Service and call it).
 
-*Create the file structure defined in the Plan.*
+## Phase 2: Test Generation (The "RED" State)
+>
+> *Goal: Generate failing tests for both Logic (Unit) and Contract (API).*
 
-- [ ] **[Scaffold]** Create/Update Pydantic Models in `[path/to/models.py]` (Rule V)
-- [ ] **[Scaffold]** Create Service Class stubs in `[path/to/service.py]`
-- [ ] **[Scaffold]** Create empty Step Definitions file in `tests/steps/[feature_steps.py]`
-- [ ] **[Config]** Update `requirements.txt` if Plan listed new dependencies.
+### 2.1 Service Unit Tests (Inner Loop)
 
----
+- [ ] **[Unit-Test]** Create `tests/unit/test_{{ domain }}_service.py`.
+  - **Target**: Test individual methods in `{{ domain_capitalized }}Service`.
+  - **Logic**: Use the `[BUSINESS LOGIC STEPS]` in **Plan Section 3** to derive test cases (Happy/Sad paths).
+  - **Isolation**: Apply `mocker.patch` based on **Plan Section 4**.
 
-## Phase 2: Implementation (Scenario by Scenario)
+### 2.2 API Integration Tests (Outer Loop)
 
-*Iterate through each Scenario defined in the `.feature` file.*
+- [ ] **[ISA-Map]** Generate `tests/steps/test_{{ feature_slug }}.py`.
+  - **Rule**: MUST load step patterns from `.specify/config/isa.yml`.
+  - **Action**: Map Gherkin steps to API calls using **Plan Section 5**.
+  - **Context**: Reference the feature file at `{{ path_to_feature_file }}`.
 
-### Scenario A: [Name from Gherkin]
+### 2.3 Verification
 
-- [ ] **[Test]** Write failing Step Definitions in `tests/steps/...` (Red State)
-- [ ] **[Mock]** Implement Mocks/Fixtures for `[External Dependency]` (Las Vegas Rule)
-- [ ] **[Code]** Implement core logic in `app/services/...` (Green State)
-- [ ] **[API]** Wire up the Controller/Router endpoint (if applicable)
-- [ ] **[Verify]** Run `pytest -k "Scenario Name"` to confirm pass.
+- [ ] **[Verify]** Run `pytest` -> **MUST FAIL** (Red).
+      *(Expected failure: `NotImplementedError` or `500 Internal Server Error`)*.
 
-### Scenario B: [Name from Gherkin]
+## Phase 3: Logic Implementation (The "GREEN" State)
+>
+> *Goal: Make tests pass by filling in the Skeletons.*
 
-- [ ] **[Test]** Write failing Step Definitions...
-- [ ] **[Mock]** Adjust Mocks for this scenario...
-- [ ] **[Code]** Implement logic...
-- [ ] **[Verify]** Run tests...
+- [ ] **[Logic]** Implement business logic in `app/services/{{ domain }}_service.py`.
+      *(Replace `raise NotImplementedError` with logic derived from Gherkin Rules)*.
+- [ ] **[Verify]** Run `pytest` -> **MUST PASS** (Green).
 
-*(Repeat for all Scenarios in the Feature file)*
+## Phase 4: Refactor & Cleanup
 
----
-
-## Phase 3: Refinement & Quality Gate
-
-*Final checks before marking "Done".*
-
-- [ ] **[Refactor]** Check Type Hints coverage (Rule V: Mandatory Types).
-- [ ] **[Refactor]** Ensure no "drive-by" formatting changes in unrelated files.
-- [ ] **[Lint]** Run linter/formatter on modified files.
-- [ ] **[Final]** Run full feature test suite: `pytest specs/featuress/[feature_name].feature`
+- [ ] **[Lint]** Run Type Check (`mypy`) and Linter.
+- [ ] **[Checklist]** Complete `checklist.md` to ensure contract adherence.

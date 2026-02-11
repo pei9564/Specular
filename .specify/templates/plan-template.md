@@ -1,100 +1,88 @@
 # Implementation Plan: [FEATURE NAME]
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE]
+**Branch**: `{{ branch_name }}`
 **Source Feature**: `{{ path_to_feature_file }}`
-> **CRITICAL**: This plan is strictly based on the Scenarios and Rules defined in the Gherkin source above. No external spec.md is used.
+**Instruction Set**: `.specify/config/isa.yml`
 
-## Constitution Check (The 7 Commandments)
-*GATE: Must pass before proceeding. If any item is unchecked, STOP and fix.*
+## 1. API Specification (The External Interface)
+>
+> **Purpose**: Defines the HTTP contract for Integration Tests.
 
-- [ ] **I. Gherkin is King**: Plan traces directly to `.feature` scenarios.
-- [ ] **II. Surgical Precision**: Changes are scoped; minimal diffs; no "drive-by" refactoring.
-- [ ] **III. Plug-and-Play**: Logic encapsulated in Service Objects/Modules; Controllers are thin.
-- [ ] **IV. Las Vegas Rule**: External calls (HTTP/DB) are isolated and strategy for Mocking is defined.
-- [ ] **V. Modern Python**: Type hints on ALL signatures; Pydantic for DTOs; PEP 8 compliant.
-- [ ] **VI. Context-Aware**: Framework (FastAPI/Django/Flask) detected and conventions respected.
-- [ ] **VII. Defensive Coding**: Error handling defined (no bare `except`); Custom Exceptions used.
-
-## Technical Context
-**Framework Detected**: [e.g., FastAPI / Django / Flask or NEEDS CLARIFICATION]
-**Async Requirement**: [Yes/No - based on Framework (e.g. FastAPI = Yes)]
-**New Dependencies**: [List new libs to add to requirements.txt or N/A]
-**Existing Components**: [List existing Services/Models to be reused]
-
----
-
-## 1. Architecture & Design
-> *Rule III: Plug-and-Play Architecture*
-
-* **Summary**: [Brief description of the implementation strategy]
-* **New Components**:
-    * `[Service/Module Name]`: [Responsibility]
-* **Modified Components**:
-    * `[File Path]`: [Change description]
-* **Data Flow**: [Describe how data moves: API -> Service -> DB]
-
-## 2. Interface Contract (API & Methods)
-> *Rule V: Modern Pythonic Standards (Type Hints & Pydantic)*
-
-#### A. API Endpoints (if applicable)
-```python
-# [Method] [https://www.merriam-webster.com/dictionary/path](https://www.merriam-webster.com/dictionary/path)
-# async def endpoint_name(payload: Schema) -> ResponseSchema:
+```yaml
+paths:
+  # Map Gherkin Action: "{{ action_description }}"
+  /api/{{ domain }}/{{ action_slug }}:
+    {{ http_method }}:
+      summary: "{{ summary }}"
+      operationId: "{{ op_id }}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/{{ request_model }}'
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/{{ response_model }}'
 
 ```
 
-#### B. Core Service Methods
+## 2. Data Models (The Shared Contract)
+
+> **Instruction**: Define Pydantic Models. MUST match `specs/db_schema/*.dbml`.
 
 ```python
-# class ServiceName:
-#     def method_name(self, arg: int) -> str:
-#         """Docstring explaining logic"""
+# app/schemas/{{ domain }}.py
+class {{ request_model }}(BaseModel):
+    # Define fields based on DBML constraints
+    pass
+
+class {{ response_model }}(BaseModel):
+    # Define response fields
+    pass
 
 ```
 
-## 3. Data Model Changes
+## 3. Service Architecture (The Internal Skeleton)
 
-> *Rule V: Pydantic Models & DB Schemas*
+> **Instruction**: Define Class and Method signatures.
+> **Note**: This skeleton will be used for both **Unit Testing** and **Implementation**.
 
-* **Database Schema**: [SQLAlchemy/ORM changes or N/A]
-* **Pydantic Models (DTOs)**:
 ```python
-# class UserRequest(BaseModel):
-#     username: str
+# app/services/{{ domain }}_service.py
+class {{ domain_capitalized }}Service:
+    def __init__(self, repo: {{ domain_capitalized }}Repository):
+        self.repo = repo
+
+    def {{ method_name }}(self, user_id: str, req: {{ request_model }}) -> {{ response_model }}:
+        """
+        [BUSINESS LOGIC STEPS]
+        1. Step one (e.g., Validation)
+        2. Step two (e.g., DB Persistence)
+        3. Step three (e.g., Result Mapping)
+        """
+        # Skeleton Phase: Always raise NotImplementedError
+        raise NotImplementedError("Skeleton created. Implementation pending Phase 3.")
 
 ```
 
-## 4. Step Definitions Mapping
+## 4. Mocking Strategy (The Las Vegas Rule)
 
-> *Rule I: Gherkin is King - Connect Scenarios to Code*
+> **Instruction**: List external dependencies to be mocked in both Unit and Integration tests.
 
-| Gherkin Step | Target Python Function/Method |
-| --- | --- |
-| `Given [precondition]` | `tests/steps/[file].py :: [function]` |
-| `When [action]` | `app/services/[service].py :: [method]` |
-| `Then [outcome]` | `tests/steps/[file].py :: [assertion]` |
+* **External Service**: `{{ service_name }}`
+* **Mock Path**: `app.services.{{ domain }}_service.{{ dependency }}`
+* **Expected Mock Data**: [Briefly describe the mock return value]
 
-## 5. Verification Strategy
+## 5. ISA Mapping (Test Generation Guide)
 
-> *Rule IV: Las Vegas Rule (Isolation & Mocking)*
+> **Instruction**: Map Gherkin Phrases to ISA Patterns.
+> This section guides Step 6 (`/speckit.tasks`) in generating `tests/steps/`.
 
-* **Unit Tests**:
-* Target: `[Service Class]`
-* Mocks: `[External API / DB Session]` (How will these be injected?)
-
-
-* **Integration Tests**:
-* Target: `[API Endpoint]`
-* Scenarios covered: `[Scenario Names]`
-
-
-
----
-
-## Complexity Tracking
-
-> *Fill ONLY if Constitution principles are violated for justifiable reasons*
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
+| Gherkin Phrase | ISA Pattern | Target Implementation |
 | --- | --- | --- |
-| [e.g. No Type Hints] | [e.g. Circular dependency issue] | [Refactoring takes too long] |
+| `(UID={user_id}) {{ gherkin_action }}, call table:` | `API_CALL` | `{{ http_method }} /api/{{ domain }}/{{ action_slug }}` |
+| `回應, with table:` | `API_ASSERT` | `{{ response_model }}` |
+| `外部服務 {{ service_name }} 回傳:` | `MOCK_SETUP` | `app.services.{{ domain }}_service.{{ dependency }}` |

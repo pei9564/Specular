@@ -1,49 +1,55 @@
 # Quality Assurance & Pre-Merge Checklist: [FEATURE NAME]
 
 **Target Feature**: `{{ path_to_feature_file }}`
-**Related Plan**: `specs/[feature_name]/plan.md`
+**Related Plan**: `{{ path_to_plan_file }}`
+**Related Schema**: `{{ path_to_dbml_file }}`
 
 > **Purpose**: This checklist serves as the final **Quality Gate** before merging code.
 > **Audience**: Author (Self-Review) & Reviewers.
 
-## 1. The "Las Vegas" Protocol (Rule IV)
-*Verify isolation and mocking strategies.*
+## 1. Contract Adherence (The "Plan" Gate)
 
-- [ ] **[Mock]** All external API calls (HTTP/gRPC) are mocked in tests. No real network requests.
-- [ ] **[DB]** Tests use transaction rollbacks or isolated DB fixtures; no state leakage.
-- [ ] **[DI]** Service classes use Dependency Injection (e.g., `client: HttpClient = Depends(...)`).
+*Verify implementation matches the approved design.*
 
-## 2. Pythonic Standards (Rule V & VI)
-*Verify modern Python practices.*
+- [ ] **[API]** Endpoints (URL, Method, Body) match the **API Specification** defined in `plan.md`.
+- [ ] **[Schema]** Pydantic Models match the **Data Contracts** defined in `plan.md`.
+- [ ] **[DBML]** Database constraints (NotNull, Unique, Length) are correctly reflected in Pydantic `Field(...)` validations.
 
-- [ ] **[Types]** 100% Type Hints on all NEW function signatures (`def func(a: int) -> str:`).
-- [ ] **[Schema]** Data crossing boundaries (API inputs/outputs) uses **Pydantic Models**, not `dict`.
-- [ ] **[Async]** `async/await` is used correctly for I/O bound operations (if FastAPI).
-- [ ] **[Style]** Code passes `ruff` / `black` / `flake8` (as configured).
-- [ ] **[Error]** No bare `except Exception: pass`. Custom exceptions are used.
+## 2. Testing Excellence (The "TDD" Gate)
 
-## 3. Gherkin Integrity (Rule I)
-*Verify traceability back to requirements.*
+*Verify both Integration and Unit test quality.*
 
-- [ ] **[Trace]** Every Scenario in the `.feature` file has a passing test.
-- [ ] **[Step]** Step definitions are reusable and not hardcoded to a single scenario logic.
-- [ ] **[Gap]** No "Pending" or "Skipped" steps in the final commit.
+- [ ] **[Integration]** Every Gherkin Scenario has a passing test using **ISA patterns** from `isa.yml`.
+- [ ] **[Unit]** Service methods have dedicated unit tests covering both **Happy Path** and **Edge Cases** (Sad Path).
+- [ ] **[Mock]** All external dependencies identified in `plan.md` are mocked; no real I/O in tests.
+- [ ] **[Coverage]** No `NotImplementedError` or `TODO` remains in the implementation.
 
-## 4. Architectural Hygiene (Rule II & III)
-*Verify modularity and surgical precision.*
+## 3. Pythonic & Architectural Hygiene
 
+*Verify modern Python practices and modularity.*
+
+- [ ] **[Types]** 100% Type Hints on all new function signatures.
+- [ ] **[DI]** Service classes use Dependency Injection; no hardcoded instantiations.
+- [ ] **[Layer]** **Router is thin**: It only handles request parsing and service delegation.
+- [ ] **[Layer]** **Service is pure**: It contains all business logic and remains testable in isolation.
+- [ ] **[Error]** Custom exceptions are used (mapped to HTTP codes), no bare `except: pass`.
+
+## 4. Gherkin & Metadata Integrity
+
+*Verify traceability and cleanliness.*
+
+- [ ] **[Trace]** Implementation code maps 1:1 to the Gherkin Rules.
+- [ ] **[Clean]** No "Pending" or "Skipped" steps in the final commit.
 - [ ] **[Scope]** The PR does NOT include reformatting of unrelated files ("Drive-by refactoring").
-- [ ] **[Layer]** Controller/Router logic is thin; business logic resides in Service Objects.
+
+## 5. Deployment Readiness
+
+- [ ] **[Async]** `async/await` is used correctly for I/O bound operations.
 - [ ] **[Files]** No circular imports introduced.
-
-## 5. Manual Verification (Smoke Test)
-*If applicable, verify strictly necessary manual steps.*
-
-- [ ] **[Env]** New environment variables (if any) are documented in `.env.example`.
-- [ ] **[Mig]** Database migrations (if any) run successfully up and down.
 
 ---
 
 **Review Decision:**
+
 - [ ] ✅ **Ready to Merge**: All checks passed.
 - [ ] 🚧 **Needs Work**: Violations found in section [X].
