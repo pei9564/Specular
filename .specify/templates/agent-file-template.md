@@ -36,7 +36,7 @@
 # specs/features/<Domain>/   -> [TRUTH] Gherkin Specs (Command/Query)
 # app/services/<Domain>/    -> Business Logic (Service Objects)
 # app/models/               -> Pydantic Schemas & DB Models
-# tests/steps/              -> Step Definitions
+# tests/integration/        -> BDD Integration Tests (pytest-bdd)
 
 ```
 

@@ -1,0 +1,49 @@
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# IDE & editors
+.vscode/
+.idea/
+.cursor*
+*.swp
+*.swo
+
+# SpecKit workflow (dev-only)
+.specify/
+.claude/
+.clarify/
+prompts/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Test reports
+reports/
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+.envrc
+
+# OS files
+.DS_Store
+Thumbs.db

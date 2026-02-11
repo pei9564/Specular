@@ -8,79 +8,161 @@
 
 ```text
 Project Root
+├── .claude/commands/      # [Shared] Spec Kit slash commands (tracked in git)
+├── .specify/              # Spec Kit 配置與腳本
+│   ├── config/isa.yml     # [ISA] 指令集映射表 (Gherkin -> Python Test)
+│   └── templates/         # 核心模版 (Specify, Plan, Tasks, Checklist)
+│
 ├── specs/
 │   ├── db_schema/         # [Source of Truth] 資料庫結構 (.dbml)
 │   └── features/          # [Gherkin Specs] 依 Domain 分類的功能規格 (.feature)
 │       └── <Domain>/
 │           ├── <Feature>.feature
 │           ├── <Feature>.plan.md    # 由 /speckit.plan 生成的技術藍圖
-│           └── <Feature>.tasks.md   # 由 /speckit.tasks 生成的執行清單
-│
-├── .specify/              # Spec Kit 配置與腳本
-│   ├── config/isa.yml     # [ISA] 指令集映射表 (Gherkin -> Python Test)
-│   └── templates/         # 核心模版 (Specify, Plan, Tasks, Checklist)
+│           ├── <Feature>.tasks.md   # 由 /speckit.tasks 生成的執行清單
+│           └── review.md            # 由 /speckit.review 生成的審查報告
 │
 ├── app/                   # 實作程式碼 (FastAPI / Pydantic)
 └── tests/
+    ├── conftest.py        # 共用 Mock Fixtures (mock repos)
     ├── unit/              # Service 單元測試
-    └── steps/             # BDD 整合測試 (由 ISA 自動生成)
-
+    └── integration/       # BDD 整合測試 (pytest-bdd)
+        └── conftest.py    # 共用 BDD 基礎設施 (context, app, table_to_dicts)
 ```
 
 ---
 
 ## ⚡ 2. 核心開發流 (The TDD Cycle)
 
-### Step 1: `/speckit.specify` (需求與發想)
+### Step 1: `/speckit.specify` — 需求規格
 
-* **目標**：產出 Gherkin 規格。AI 會根據 `@dbml` 自動補完輸入驗證與 Edge Cases。
-* **關鍵標籤**：`Type: COMMAND` (寫入型) 或 `Type: QUERY` (查詢型)。
+產出 Gherkin 規格。AI 會根據 DBML 自動補完輸入驗證與 Edge Cases。
 
-### Step 2: `/speckit.clarify` (自動驗收)
+### Step 2: `/speckit.clarify` — 自動驗收
 
-* **目標**：AI 扮演 QA 角色，檢查 Feature 是否與 DBML 衝突，並移除冗餘的 `@auto_generated` 場景。
+AI 扮演 QA 角色，檢查 Feature 是否與 DBML 衝突，提出澄清問題。
 
-### Step 3: `/speckit.plan` (建築師藍圖)
+### Step 3: `/speckit.plan` — 建築師藍圖
 
-* **目標**：定義 **API 契約**與 **Service 骨架**。
-* **產出**：
+定義 API 契約、Pydantic Models、Service Skeleton、ISA Mapping。
 
-1. **API Spec (YAML)**：定義 Endpoint。
-2. **Pydantic Models**：與 DBML 對齊的資料結構。
-3. **Service Skeleton**：帶有 `raise NotImplementedError` 的 Python 類別。
+### Step 4: `/speckit.tasks` — 工頭拆解
 
-### Step 4: `/speckit.tasks` (工頭拆解)
+生成 Phase-based 任務清單 (Skeleton → Unit Tests → BDD → Logic → Cleanup)。
 
-* **目標**：生成 **Red-Green** 任務清單與自動化測試代碼。
-* **自動化機制**：AI 讀取 `.specify/config/isa.yml`，將 Gherkin 步驟「翻譯」為 `pytest-bdd` 測試程式碼。
+### Step 5: `/speckit.implement` — 填肉實作
 
-### Step 5: `/speckit.implement` (填肉實作)
+依序執行任務，TDD 紅燈→綠燈。完成後可 handoff 至 `/speckit.review`。
 
-* **目標**：依序執行任務。
+### Step 6: `/speckit.review` — 審查報告
 
-1. 產生 Skeleton 檔案 -> **紅燈**。
-2. 填入 Business Logic -> **綠燈**。
+生成 `review.md`，彙整測試結果、BDD 覆蓋率、任務完成度、檔案變更。
 
 ---
 
-## 🛠️ 3. ISA (Instruction Set Architecture) 系統
+## 🚀 3. 快速上手：完整範例 (Full Walkthrough)
 
-為了讓 Gherkin 變成「可執行的代碼」，我們維護一份 `isa.yml`。
+以下以 **CreateAgentV2** 功能為例，展示從零到完成的完整流程。
 
-| Gherkin 語法範例 | ISA 類型 | 測試行為 |
-| --- | --- | --- |
-| `(UID={user_id}) 更新進度, call table:` | `API_CALL` | 自動執行 `client.post()` |
-| `回應, with table:` | `API_ASSERT` | 驗證 Status Code 與 Response Body |
-| `外部服務 {service} 回傳:` | `MOCK_SETUP` | 使用 `mocker.patch` 進行隔離 |
+### Step 1: 撰寫規格
+
+```
+/speckit.specify
+Type: COMMAND
+Feature: agent/CreateAgent
+Domain: agent
+
+Requirement: 使用者可以透過一次操作創建 Agent 並同時綁定 MCP Servers
+Context: @specs/db_schema/agent.dbml
+```
+
+產出: `specs/features/agent/CreateAgent.feature`
+
+### Step 2: 澄清規格
+
+```
+/speckit.clarify @specs/features/agent/CreateAgent.feature
+```
+
+AI 會提出最多 5 個澄清問題，答案會回寫到 `.feature` 的 Clarifications 區塊。
+
+### Step 3: 產生技術藍圖
+
+```
+/speckit.plan @specs/features/agent/CreateAgent.feature
+```
+
+產出: `specs/features/agent/CreateAgent.plan.md`
+
+- Section 1: API Specification (endpoint, status codes)
+- Section 2: Pydantic Data Models
+- Section 3: Service Architecture (skeleton)
+- Section 4: Mocking Strategy
+- Section 5: ISA Mapping
+
+### Step 4: 拆解任務
+
+```
+/speckit.tasks @specs/features/agent/CreateAgent.plan.md
+```
+
+產出: `specs/features/agent/CreateAgent.tasks.md`
+
+- Phase 1: Skeletons (schemas, services, routers)
+- Phase 2: Unit Tests (RED state)
+- Phase 3: BDD Integration Tests (MANDATORY)
+- Phase 3.5: **Verify RED** — run tests, confirm all FAIL (TDD gate)
+- Phase 4: Logic Implementation (GREEN state, pass count must match RED count)
+- Phase 5: Refactor & Cleanup
+
+### Step 5: 執行實作
+
+```
+/speckit.implement @specs/features/agent/CreateAgent.tasks.md
+```
+
+AI 會逐 Phase 執行任務，在 Docker 中跑測試，直到全綠。
+
+### Step 6: 產生審查報告
+
+```
+/speckit.review
+```
+
+產出: `specs/features/agent/review.md`  +  `reports/test-report.html`
 
 ---
 
-## 📝 4. 命名慣例與驗收標準
+## 🛠️ 4. ISA (Instruction Set Architecture) 系統
+
+為了讓 Gherkin 變成「可執行的代碼」，我們維護一份 `.specify/config/isa.yml`。
+
+| ISA 類型 | Context | 說明 | 定義位置 |
+| --- | --- | --- | --- |
+| `MOCK_SETUP` | Given | 解析 Gherkin Background data table → `context["background_*"]` | `tests/integration/conftest.py` (共用) |
+| `API_CALL` | When | 解析 data table → `context["payload"]` (不發送請求) | 各 feature test file |
+| `API_TRIGGER` | Then (internal) | `ensure_called()` — 觸發 HTTP 請求，快取至 `context["response"]` | `tests/integration/conftest.py` (共用) |
+| `API_ASSERT` | Then | 驗證 Status Code 與 Response Body | 各 feature test file |
+| `DB_ASSERT` | Then | 驗證 Mock Repository 呼叫模式 | 各 feature test file |
+
+### Context Flow (資料流)
+
+```
+Given → context["background_mcp"] = table_to_dicts(datatable)
+When  → context["payload"]["field"] = value  (from data table)
+When  → context["payload"]["mcp_server_ids"] = [ids]  (from data table)
+Then  → ensure_called() fires POST /api/agents → context["response"]
+Then  → assert context["response"].status_code == 201
+```
+
+---
+
+## 📝 5. 命名慣例與驗收標準
 
 ### Gherkin 命名格式 (Pattern)
 
-* **Precondition**: `XX 必須/只能 YY` (驗證失敗、狀態衝突)。
-* **Postcondition**: `XX 應該 ZZ` (狀態改變、副作用)。
+- **Precondition**: `XX 必須/只能 YY` (驗證失敗、狀態衝突)。
+- **Postcondition**: `XX 應該 ZZ` (狀態改變、副作用)。
 
 ### 驗收清單 (Checklist)
 
@@ -90,12 +172,39 @@ Project Root
 2. **[Isolation]** 所有外部呼叫皆已被 Mock (Las Vegas Rule)。
 3. **[Structure]** Router 保持薄層 (Thin)，邏輯皆在 Service 中 (Pure)。
 4. **[Tests]** 單元測試覆蓋了 Service 的所有邏輯分支。
+5. **[BDD]** 每個 Gherkin Scenario 都有對應的 `@scenario()` 整合測試。
+6. **[Report]** `review.md` 已產生且為最新狀態。
 
 ---
 
-## 🏷️ 5. Tags 說明
+## 🏷️ 6. Tags 說明
 
-* `@auto_generated`: AI 根據 DBML 自動推導的邏輯（請務必人工 Review）。
-* `@happy_path`: 標準成功流程。
-* `@edge_case`: 邊界測試 (如空值、極大值)。
-* `@wip`: 開發中，CI 應跳過。
+- `@auto_generated`: AI 根據 DBML 自動推導的邏輯（請務必人工 Review）。
+- `@happy_path`: 標準成功流程。
+- `@edge_case`: 邊界測試 (如空值、極大值)。
+- `@wip`: 開發中，CI 應跳過。
+
+---
+
+## 🧪 7. 測試與執行規範 (Testing Environment)
+
+本專案強制要求在 **Docker** 環境中進行測試。
+
+### 常用指令
+
+```bash
+# 執行完整測試
+docker compose run --rm test
+
+# 執行特定單元測試
+docker compose run --rm test pytest tests/unit/test_agent_service.py -v
+
+# 執行 BDD 整合測試
+docker compose run --rm test pytest tests/integration/ -v
+
+# 產生測試報告 (HTML + JUnit XML)
+docker compose run --rm report
+
+# 型別檢查
+docker compose run --rm lint
+```
