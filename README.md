@@ -1,286 +1,255 @@
-# Spec Kit 2.0: AI-Native & Contract-Driven Workflow
+# Specular — Spec-Driven Development for Claude Code
 
-本專案採用 **Spec-Driven Development (SDD)** 流程。透過 **Gherkin (規格)**、**DBML (資料結構)** 與 **ISA (指令集)** 的三位一體，實現從需求到「自動化測試代碼」的完整閉環。
+**Specular** is an AI-native development framework that turns natural language requirements into tested, working code through a structured specification pipeline.
 
-## 📂 1. 目錄結構標準 (Directory Structure)
+It uses **Spec Kit** — a set of `/speckit.*` slash commands inside [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — to guide AI through: Spec → Clarify → Plan → Tasks → Implement → Review.
 
-所有檔案必須遵守 **Domain-Driven** 結構，確保 AI 能精確載入上下文。
-
-```text
-Project Root
-├── .claude/commands/      # [Shared] Spec Kit slash commands (tracked in git)
-├── .specify/              # Spec Kit 配置與腳本
-│   ├── config/isa.yml     # [ISA] 指令集映射表 (Gherkin -> Python Test)
-│   └── templates/         # 核心模版 (Specify, Plan, Tasks, Checklist)
-│
-├── specs/
-│   ├── db_schema/         # [Source of Truth] 資料庫結構 (.dbml)
-│   └── features/          # [Gherkin Specs] 依 Domain 分類的功能規格 (.feature)
-│       └── <Domain>/
-│           ├── <Feature>.feature
-│           ├── <Feature>.plan.md    # 由 /speckit.plan 生成的技術藍圖
-│           ├── <Feature>.tasks.md   # 由 /speckit.tasks 生成的執行清單
-│           └── review.md            # 由 /speckit.review 生成的審查報告
-│
-├── app/                   # 實作程式碼 (FastAPI / Pydantic)
-└── tests/
-    ├── conftest.py        # 共用 Mock Fixtures (mock repos)
-    ├── unit/              # Service 單元測試
-    └── integration/       # BDD 整合測試 (pytest-bdd)
-        └── conftest.py    # 共用 BDD 基礎設施 (context, app, table_to_dicts)
+```
+You describe WHAT → Specular (Spec Kit + Claude Code) builds HOW
 ```
 
 ---
 
-## ⚡ 2. 核心開發流 (The TDD Cycle)
+## How It Works
 
-### Step 1: `/speckit.specify` — 需求規格
+```text
+/speckit.specify  →  Gherkin .feature file (functional spec)
+/speckit.clarify  →  AI QA: detect ambiguities, record answers
+/speckit.plan     →  Technical blueprint (API, models, architecture)
+/speckit.tasks    →  Phased task list (TDD: RED → GREEN)
+/speckit.implement → Execute tasks, run tests in Docker
+/speckit.review   →  Review report (tests, coverage, checklist)
+```
 
-產出 Gherkin 規格。AI 會根據 DBML 自動補完輸入驗證與 Edge Cases。
-
-### Step 2: `/speckit.clarify` — 自動驗收
-
-AI 扮演 QA 角色，檢查 Feature 是否與 DBML 衝突，提出澄清問題。
-
-### Step 3: `/speckit.plan` — 建築師藍圖
-
-定義 API 契約、Pydantic Models、Service Skeleton、ISA Mapping。
-
-### Step 4: `/speckit.tasks` — 工頭拆解
-
-生成 Phase-based 任務清單 (Skeleton → Unit Tests → BDD → Logic → Cleanup)。
-
-### Step 5: `/speckit.implement` — 填肉實作
-
-依序執行任務，TDD 紅燈→綠燈。完成後可 handoff 至 `/speckit.review`。
-
-### Step 6: `/speckit.review` — 審查報告
-
-生成 `review.md`，彙整測試結果、BDD 覆蓋率、任務完成度、檔案變更。
+Each step produces a **traceable artifact**. Nothing is invented out of thin air — every line of code traces back to a Gherkin scenario.
 
 ---
 
-## 🚀 3. 快速上手：完整範例 (Full Walkthrough)
+## Quick Start
 
-以下以 **CreateAgentV2** 功能為例，展示從零到完成的完整流程。
+### Prerequisites
 
-### Step 1: 撰寫規格
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI installed
+- Docker & Docker Compose
+- Git
+
+### New Project Setup
+
+```bash
+mkdir my-project && cd my-project
+git init
+
+# Copy the Specular framework files from an existing Specular repo
+# (see "What to Copy" below)
+
+# Customize for your project
+# 1. Edit CLAUDE.md — update Section 2 (Tech Stack) and Section 3 (Structure)
+# 2. Edit .specify/memory/constitution.md — adjust principles if needed
+# 3. Add your DBML schema to specs/db_schema/
+# 4. Verify Docker works
+docker compose run --rm test
+```
+
+### Add to Existing Repo (Safe Merge)
+
+If you already have a project and want to add Spec Kit without overwriting anything:
+
+```bash
+# Copy from a Specular source repo (will NOT overwrite existing files)
+SPECULAR_SRC=/path/to/specular-source
+
+# -- Core config --
+cp -rn $SPECULAR_SRC/.specify/ .specify/
+cp -rn $SPECULAR_SRC/.claude/ .claude/
+
+# -- Docker & test infra (skip if you already have these) --
+cp -n $SPECULAR_SRC/Dockerfile ./Dockerfile
+cp -n $SPECULAR_SRC/docker-compose.yml ./docker-compose.yml
+cp -n $SPECULAR_SRC/pytest.ini ./pytest.ini
+cp -n $SPECULAR_SRC/requirements.txt ./requirements.txt
+
+# -- Test scaffolding --
+mkdir -p tests/unit tests/integration
+cp -n $SPECULAR_SRC/tests/__init__.py tests/
+cp -n $SPECULAR_SRC/tests/unit/__init__.py tests/unit/
+cp -n $SPECULAR_SRC/tests/integration/__init__.py tests/integration/
+cp -n $SPECULAR_SRC/tests/integration/conftest.py tests/integration/
+
+# -- Ignore files (append, don't overwrite) --
+cat $SPECULAR_SRC/.gitignore >> .gitignore && sort -u -o .gitignore .gitignore
+cat $SPECULAR_SRC/.dockerignore >> .dockerignore && sort -u -o .dockerignore .dockerignore
+
+# -- Spec directories --
+mkdir -p specs/db_schema specs/features
+
+# Verify
+docker compose run --rm test
+```
+
+> **`cp -n`** = no-clobber. Existing files are never overwritten.
+> **`.specify/`** and **`.claude/commands/`** are the only directories Spec Kit owns. Your `app/`, `src/`, `tests/unit/`, etc. are untouched.
+
+---
+
+## Your First Feature
+
+Once Specular is installed, open Claude Code in your project:
+
+```bash
+claude
+```
+
+### Step 1: Write the spec
 
 ```
 /speckit.specify
 Type: COMMAND
-Feature: agent/CreateAgent
-Domain: agent
+Feature: user/CreateUser
+Domain: user
 
-Requirement: 使用者可以透過一次操作創建 Agent 並同時綁定 MCP Servers
-Context: @specs/db_schema/agent.dbml
+Requirement: Users can register with email and password
+Context: @specs/db_schema/user.dbml
 ```
 
-產出: `specs/features/agent/CreateAgent.feature`
+Output: `specs/features/user/CreateUser.feature`
 
-### Step 2: 澄清規格
-
-```
-/speckit.clarify @specs/features/agent/CreateAgent.feature
-```
-
-AI 會提出最多 5 個澄清問題，答案會回寫到 `.feature` 的 Clarifications 區塊。
-
-### Step 3: 產生技術藍圖
+### Step 2: Clarify ambiguities
 
 ```
-/speckit.plan @specs/features/agent/CreateAgent.feature
+/speckit.clarify @specs/features/user/CreateUser.feature
 ```
 
-產出: `specs/features/agent/CreateAgent.plan.md`
+AI asks up to 5 targeted questions. Answers are recorded in the `.feature` file.
 
-- Section 1: API Specification (endpoint, status codes)
-- Section 2: Pydantic Data Models
-- Section 3: Service Architecture (skeleton)
-- Section 4: Mocking Strategy
-- Section 5: ISA Mapping
-
-### Step 4: 拆解任務
+### Step 3: Generate technical blueprint
 
 ```
-/speckit.tasks @specs/features/agent/CreateAgent.plan.md
+/speckit.plan @specs/features/user/CreateUser.feature
 ```
 
-產出: `specs/features/agent/CreateAgent.tasks.md`
+Output: `specs/features/user/CreateUser.plan.md` — API contracts, Pydantic models, service architecture, ISA mapping.
 
-- Phase 1: Skeletons (schemas, services, routers)
-- Phase 2: Unit Tests (RED state)
-- Phase 3: BDD Integration Tests (MANDATORY)
-- Phase 3.5: **Verify RED** — run tests, confirm all FAIL (TDD gate)
-- Phase 4: Logic Implementation (GREEN state, pass count must match RED count)
-- Phase 5: Refactor & Cleanup
-
-### Step 5: 執行實作
+### Step 4: Break down into tasks
 
 ```
-/speckit.implement @specs/features/agent/CreateAgent.tasks.md
+/speckit.tasks @specs/features/user/CreateUser.plan.md
 ```
 
-AI 會逐 Phase 執行任務，在 Docker 中跑測試，直到全綠。
+Output: `specs/features/user/CreateUser.tasks.md`
 
-### Step 6: 產生審查報告
+| Phase | Goal |
+|-------|------|
+| Phase 1 | Skeletons (schemas, services, routers) |
+| Phase 2 | Unit Tests (RED state) |
+| Phase 3 | BDD Integration Tests |
+| Phase 3.5 | **Verify RED** — all tests must FAIL |
+| Phase 4 | Logic Implementation (GREEN state) |
+| Phase 5 | Refactor & Cleanup |
+
+### Step 5: Implement
+
+```
+/speckit.implement @specs/features/user/CreateUser.tasks.md
+```
+
+AI executes tasks phase by phase, running tests in Docker until all green.
+
+### Step 6: Generate review report
 
 ```
 /speckit.review
 ```
 
-產出: `specs/features/agent/review.md`  +  `reports/test-report.html`
+Output: `specs/features/user/review.md` + `reports/test-report.html`
 
 ---
 
-## 🛠️ 4. ISA (Instruction Set Architecture) 系統
-
-為了讓 Gherkin 變成「可執行的代碼」，我們維護一份 `.specify/config/isa.yml`。
-
-| ISA 類型 | Context | 說明 | 定義位置 |
-| --- | --- | --- | --- |
-| `MOCK_SETUP` | Given | 解析 Gherkin Background data table → `context["background_*"]` | `tests/integration/conftest.py` (共用) |
-| `API_CALL` | When | 解析 data table → `context["payload"]` (不發送請求) | 各 feature test file |
-| `API_TRIGGER` | Then (internal) | `ensure_called()` — 觸發 HTTP 請求，快取至 `context["response"]` | `tests/integration/conftest.py` (共用) |
-| `API_ASSERT` | Then | 驗證 Status Code 與 Response Body | 各 feature test file |
-| `DB_ASSERT` | Then | 驗證 Mock Repository 呼叫模式 | 各 feature test file |
-
-### Context Flow (資料流)
-
-```
-Given → context["background_mcp"] = table_to_dicts(datatable)
-When  → context["payload"]["field"] = value  (from data table)
-When  → context["payload"]["mcp_server_ids"] = [ids]  (from data table)
-Then  → ensure_called() fires POST /api/agents → context["response"]
-Then  → assert context["response"].status_code == 201
-```
-
----
-
-## 📝 5. 命名慣例與驗收標準
-
-### Gherkin 命名格式 (Pattern)
-
-- **Precondition**: `XX 必須/只能 YY` (驗證失敗、狀態衝突)。
-- **Postcondition**: `XX 應該 ZZ` (狀態改變、副作用)。
-
-### 驗收清單 (Checklist)
-
-在 Merge 前，必須確保：
-
-1. **[Contract]** 程式碼與 `plan.md` 的 API 定義 100% 一致。
-2. **[Isolation]** 所有外部呼叫皆已被 Mock (Las Vegas Rule)。
-3. **[Structure]** Router 保持薄層 (Thin)，邏輯皆在 Service 中 (Pure)。
-4. **[Tests]** 單元測試覆蓋了 Service 的所有邏輯分支。
-5. **[BDD]** 每個 Gherkin Scenario 都有對應的 `@scenario()` 整合測試。
-6. **[Report]** `review.md` 已產生且為最新狀態。
-
----
-
-## 🏷️ 6. Tags 說明
-
-- `@auto_generated`: AI 根據 DBML 自動推導的邏輯（請務必人工 Review）。
-- `@happy_path`: 標準成功流程。
-- `@edge_case`: 邊界測試 (如空值、極大值)。
-- `@wip`: 開發中，CI 應跳過。
-
----
-
-## 🧪 7. 測試與執行規範 (Testing Environment)
-
-本專案強制要求在 **Docker** 環境中進行測試。
-
-### 常用指令
-
-```bash
-# 執行完整測試
-docker compose run --rm test
-
-# 執行特定單元測試
-docker compose run --rm test pytest tests/unit/test_agent_service.py -v
-
-# 執行 BDD 整合測試
-docker compose run --rm test pytest tests/integration/ -v
-
-# 產生測試報告 (HTML + JUnit XML)
-docker compose run --rm report
-
-# 型別檢查
-docker compose run --rm lint
-```
-
----
-
-## 🆕 8. 建立新專案 (New Project Setup)
-
-想在新的 repo 使用 Spec Kit？只需複製框架檔案，帶入你自己的規格。
-
-### 需要複製的檔案 (Framework — 可跨專案複用)
+## Project Structure
 
 ```text
-.claude/commands/             ← 所有 /speckit.* slash commands
-.specify/
-├── config/isa.yml            ← ISA 指令集映射
-├── memory/constitution.md    ← 專案原則
-├── templates/                ← 所有模版 (spec, plan, tasks, checklist)
-└── scripts/                  ← check-prerequisites.sh 等腳本
-
-CLAUDE.md                     ← Claude Code 專案指令 (需修改 Section 2-3)
-Dockerfile                    ← 基礎 Docker 映像
-docker-compose.yml            ← test / lint / report 服務
-pytest.ini                    ← pytest 設定 (含 bdd_features_base_dir)
-requirements.txt              ← Python 依賴
-.gitignore                    ← 含 .claude/* + !.claude/commands/ 規則
-.dockerignore                 ← Docker build 排除清單
-
-tests/
-├── __init__.py
-├── integration/
-│   ├── __init__.py
-│   └── conftest.py           ← 共用 BDD 基礎設施 (table_to_dicts, context, ensure_called)
-└── unit/
-    └── __init__.py
+Project Root
+├── .claude/commands/        # Specular slash commands (tracked in git)
+├── .specify/                # Specular configuration
+│   ├── config/isa.yml       # ISA: Gherkin → Test mapping rules
+│   ├── memory/              # Project constitution & principles
+│   ├── templates/           # Code generation templates
+│   └── scripts/             # Automation scripts
+│
+├── specs/                   # YOUR specifications
+│   ├── db_schema/           # DBML database definitions (source of truth)
+│   └── features/            # Gherkin specs organized by domain
+│       └── <domain>/
+│           ├── <Feature>.feature    # Functional spec
+│           ├── <Feature>.plan.md    # Technical blueprint
+│           ├── <Feature>.tasks.md   # Implementation tasks
+│           └── review.md            # Review report
+│
+├── app/                     # YOUR implementation code
+├── tests/
+│   ├── conftest.py          # Your mock fixtures
+│   ├── unit/                # Unit tests
+│   └── integration/         # BDD integration tests (pytest-bdd)
+│       └── conftest.py      # Shared BDD infrastructure
+│
+├── CLAUDE.md                # Claude Code project instructions
+├── Dockerfile               # Test environment
+├── docker-compose.yml       # test / lint / report services
+└── pytest.ini               # pytest + bdd_features_base_dir
 ```
 
-### 不要複製的檔案 (Project-specific — 屬於原專案)
+**Specular owns**: `.specify/`, `.claude/commands/`, templates, scripts
+**You own**: `specs/`, `app/`, `tests/`, `CLAUDE.md`
 
-```text
-specs/features/*/             ← 功能規格、計劃、任務 (帶入你自己的)
-specs/db_schema/*             ← DBML 資料結構 (帶入你自己的)
-app/*                         ← 實作程式碼
-tests/conftest.py             ← Mock fixtures (綁定原專案的 Repository)
-tests/unit/test_*             ← 單元測試
-tests/integration/test_*      ← Feature-specific BDD 測試
-reports/                      ← 產生的測試報告 (已被 gitignore)
-```
+---
 
-### 設定步驟
+## Customization
 
-```bash
-# 1. 建立新 repo 並複製框架檔案
-mkdir my-new-project && cd my-new-project
-git init
-# (複製上方列出的框架檔案)
+### CLAUDE.md
 
-# 2. 放入你的規格
-mkdir -p specs/db_schema specs/features
-# 將 .dbml 檔案放入 specs/db_schema/
-# 將 .feature 檔案放入 specs/features/<domain>/
+This is your project's instruction file for Claude Code. Update these sections:
 
-# 3. 修改 CLAUDE.md
-#    - Section 2: 更新 Tech Stack (如改用 Django, Express 等)
-#    - Section 3: 更新 Project Structure Map
+| Section | What to change |
+|---------|---------------|
+| Section 2: Tech Stack | Your framework, DB, libraries |
+| Section 3: Structure Map | Your actual directory layout |
+| Section 5: Decisions | Your architectural decisions |
 
-# 4. 修改 tests/integration/conftest.py
-#    - 更新 app fixture 的 router/service 匯入
-#    - 更新 ensure_called() 的 API endpoint
+### Constitution (`.specify/memory/constitution.md`)
 
-# 5. 建立 tests/conftest.py
-#    - 定義你的 mock repository fixtures
+The 8 principles that govern all generated code. Modify to match your team's standards (e.g., change Python → TypeScript, FastAPI → Express).
 
-# 6. 驗證 Docker 環境
-docker compose run --rm test  # 應成功啟動（尚無測試）
+### ISA Config (`.specify/config/isa.yml`)
 
-# 7. 開始第一個功能
-#    /speckit.specify → /speckit.clarify → /speckit.plan → /speckit.tasks → /speckit.implement
-```
+Maps Gherkin step types to test code patterns. Extend when adding new step types.
+
+### Docker Services
+
+| Service | Command | Purpose |
+|---------|---------|---------|
+| `test` | `docker compose run --rm test` | Run all tests |
+| `lint` | `docker compose run --rm lint` | Type checking (mypy) |
+| `report` | `docker compose run --rm report` | HTML + JUnit XML reports |
+
+---
+
+## What is What
+
+| Term | What it is |
+|------|------------|
+| **Specular** | The overall framework (this repo's structure, conventions, and principles) |
+| **Spec Kit** | The `/speckit.*` slash commands that drive the workflow inside Claude Code |
+| **ISA** | Instruction Set Architecture — maps Gherkin steps to test code patterns |
+| **CLAUDE.md** | Project-level instructions that Claude Code reads on every session |
+| **Constitution** | The 8 non-negotiable coding principles (`.specify/memory/constitution.md`) |
+
+### What to Copy (Framework) vs What's Yours (Project)
+
+| Copy to new projects | Don't copy (project-specific) |
+|---|---|
+| `.claude/commands/` | `specs/features/*/` |
+| `.specify/` (config, templates, scripts, memory) | `specs/db_schema/*` |
+| `CLAUDE.md` (then customize Sections 2-3) | `app/*` |
+| `Dockerfile`, `docker-compose.yml` | `tests/conftest.py` |
+| `pytest.ini`, `requirements.txt` | `tests/unit/test_*` |
+| `.gitignore`, `.dockerignore` | `tests/integration/test_*` |
+| `tests/integration/conftest.py` (shared BDD infra) | `reports/` |
