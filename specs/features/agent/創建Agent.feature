@@ -52,7 +52,7 @@ Feature: 創建 Agent
     Example: 成功 - 指定有效模型
       When 使用者創建 Agent 並指定 model_id 為 "gpt-4o"
       Then Agent 應成功建立
-      And Agent 的 model_config 應包含:
+      And Agent 的 llm_config 應包含:
         | field       | value  |
         | model_id    | gpt-4o |
         | provider    | openai |
@@ -74,7 +74,7 @@ Feature: 創建 Agent
         | temperature |  0.3 |
         | max_tokens  | 2048 |
       Then Agent 應成功建立
-      And Agent 的 model_config 應反映自訂參數
+      And Agent 的 llm_config 應反映自訂參數
 
     Example: 失敗 - temperature 超出範圍
       When 使用者嘗試創建 Agent 並設定 temperature 為 2.5

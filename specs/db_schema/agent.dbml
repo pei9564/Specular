@@ -6,7 +6,7 @@ Table Agents {
     mode string [note: "chat, triggers"]
     model_id string [note: "Primary LLM Model ID"]
     system_prompt string [note: "Default System Prompt"]
-    model_config json [note: "JSON configuration for model parameters"]
+    llm_config json [note: "JSON configuration for model parameters"]
     memory_config json [note: "JSON configuration for memory"]
     created_at string
     updated_at string

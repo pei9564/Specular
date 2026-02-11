@@ -15,7 +15,7 @@
 | mode | string | `chat` (default) or `triggers` | |
 | model_id | string | FK → LLM Models, must be active | |
 | system_prompt | string | Optional | |
-| model_config | json | `{temperature: 0.7, max_tokens: 4096}` defaults | temperature: [0, 2.0] |
+| llm_config | json | `{temperature: 0.7, max_tokens: 4096}` defaults | temperature: [0, 2.0] |
 | memory_config | json | `{type: "in_memory"}` default | type: `in_memory` / `database` |
 | created_at | string (datetime) | Auto-set | |
 | updated_at | string (datetime) | Auto-set | |
