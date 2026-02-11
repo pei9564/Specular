@@ -1,4 +1,0 @@
-Project SpecularAI {
-  database_type: 'PostgreSQL'
-  Note: 'Specular AI Database Schema'
-}
