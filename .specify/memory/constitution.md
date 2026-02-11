@@ -20,7 +20,7 @@
 
 ### I. Gherkin is King (Single Source of Truth)
 
-The `.feature` files in `spec/features/` are the **ONLY** specification
+The `.feature` files in `specs/featuress/` are the **ONLY** specification
 artifacts. No separate markdown spec files (e.g., `spec.md`) MUST be
 generated or maintained.
 
@@ -113,7 +113,7 @@ Errors MUST be visible, structured, and actionable.
 ## Development Workflow
 
 1. **Spec phase**: Author or update the `.feature` file in
-   `spec/features/`.
+   `specs/featuress/`.
 2. **Plan phase** (`/speckit.plan`): Read the `.feature` file, produce
    `plan.md` with architecture, contracts, and data model.
 3. **Task phase** (`/speckit.tasks`): Decompose the plan into ordered,
