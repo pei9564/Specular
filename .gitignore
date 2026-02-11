@@ -1,7 +1,8 @@
 prompts
 .clarify/
 .vscode/
-.claude
+.claude/*
+!.claude/commands/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -40,6 +41,9 @@ MANIFEST
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+
+# Test reports
+reports/
 
 # Unit test / coverage reports
 htmlcov/

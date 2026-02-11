@@ -19,7 +19,8 @@
 
 *Verify both Integration and Unit test quality.*
 
-- [ ] **[Integration]** Every Gherkin Scenario has a passing test using **ISA patterns** from `isa.yml`.
+- [ ] **[BDD]** `tests/integration/test_{{ feature_slug }}.py` exists with `@scenario()` decorators.
+- [ ] **[BDD-Count]** Number of `@scenario()` decorators == number of Gherkin Scenarios in `.feature` file.
 - [ ] **[Unit]** Service methods have dedicated unit tests covering both **Happy Path** and **Edge Cases** (Sad Path).
 - [ ] **[Mock]** All external dependencies identified in `plan.md` are mocked; no real I/O in tests.
 - [ ] **[Coverage]** No `NotImplementedError` or `TODO` remains in the implementation.
@@ -44,6 +45,10 @@
 
 ## 5. Deployment Readiness
 
+- [ ] **[Docker]** `docker compose run --rm test` passes all tests (no local-only execution).
+- [ ] **[Docker]** `docker compose run --rm lint` passes type checks with zero errors.
+- [ ] **[Docker]** `Dockerfile` and `docker-compose.yml` are present and up to date.
+- [ ] **[Report]** `review.md` generated via `/speckit.review` and up to date.
 - [ ] **[Async]** `async/await` is used correctly for I/O bound operations.
 - [ ] **[Files]** No circular imports introduced.
 

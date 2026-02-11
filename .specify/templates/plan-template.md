@@ -76,13 +76,63 @@ class {{ domain_capitalized }}Service:
 * **Mock Path**: `app.services.{{ domain }}_service.{{ dependency }}`
 * **Expected Mock Data**: [Briefly describe the mock return value]
 
-## 5. ISA Mapping (Test Generation Guide)
+## 5. Development Environment
+
+> **Instruction**: All code execution (tests, lint, type checks) MUST run inside Docker.
+
+```bash
+# Run all tests
+docker compose run --rm test
+
+# Run specific test file
+docker compose run --rm test pytest tests/unit/test_{{ domain }}_service.py -v
+
+# Run type check
+docker compose run --rm lint
+
+# Run a one-off command
+docker compose run --rm app <command>
+```
+
+**Required files** (create if missing):
+- `Dockerfile` — Python image with `requirements.txt` installed
+- `docker-compose.yml` — Services: `app`, `test`, `lint` (and `db` when needed)
+- `requirements.txt` — All runtime + dev dependencies
+
+## 6. ISA Mapping (Test Generation Guide)
 
 > **Instruction**: Map Gherkin Phrases to ISA Patterns.
-> This section guides Step 6 (`/speckit.tasks`) in generating `tests/steps/`.
+> This section guides Step 6 (`/speckit.tasks`) in generating `tests/integration/`.
 
 | Gherkin Phrase | ISA Pattern | Target Implementation |
 | --- | --- | --- |
 | `(UID={user_id}) {{ gherkin_action }}, call table:` | `API_CALL` | `{{ http_method }} /api/{{ domain }}/{{ action_slug }}` |
 | `回應, with table:` | `API_ASSERT` | `{{ response_model }}` |
 | `外部服務 {{ service_name }} 回傳:` | `MOCK_SETUP` | `app.services.{{ domain }}_service.{{ dependency }}` |
+
+## 7. File Structure
+
+> **Instruction**: List all files that will be created or modified.
+
+```
+app/
+├── schemas/
+│   └── {{ domain }}.py
+├── services/
+│   └── {{ domain }}_service.py
+├── repositories/
+│   └── {{ domain }}_repository.py
+├── routers/
+│   └── {{ domain }}.py
+└── exceptions.py
+
+tests/
+├── unit/
+│   └── test_{{ domain }}_service.py
+└── integration/
+    └── test_{{ feature_slug }}.py
+
+Dockerfile
+docker-compose.yml
+requirements.txt
+```
