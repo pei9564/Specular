@@ -208,3 +208,79 @@ docker compose run --rm report
 # 型別檢查
 docker compose run --rm lint
 ```
+
+---
+
+## 🆕 8. 建立新專案 (New Project Setup)
+
+想在新的 repo 使用 Spec Kit？只需複製框架檔案，帶入你自己的規格。
+
+### 需要複製的檔案 (Framework — 可跨專案複用)
+
+```text
+.claude/commands/             ← 所有 /speckit.* slash commands
+.specify/
+├── config/isa.yml            ← ISA 指令集映射
+├── memory/constitution.md    ← 專案原則
+├── templates/                ← 所有模版 (spec, plan, tasks, checklist)
+└── scripts/                  ← check-prerequisites.sh 等腳本
+
+CLAUDE.md                     ← Claude Code 專案指令 (需修改 Section 2-3)
+Dockerfile                    ← 基礎 Docker 映像
+docker-compose.yml            ← test / lint / report 服務
+pytest.ini                    ← pytest 設定 (含 bdd_features_base_dir)
+requirements.txt              ← Python 依賴
+.gitignore                    ← 含 .claude/* + !.claude/commands/ 規則
+.dockerignore                 ← Docker build 排除清單
+
+tests/
+├── __init__.py
+├── integration/
+│   ├── __init__.py
+│   └── conftest.py           ← 共用 BDD 基礎設施 (table_to_dicts, context, ensure_called)
+└── unit/
+    └── __init__.py
+```
+
+### 不要複製的檔案 (Project-specific — 屬於原專案)
+
+```text
+specs/features/*/             ← 功能規格、計劃、任務 (帶入你自己的)
+specs/db_schema/*             ← DBML 資料結構 (帶入你自己的)
+app/*                         ← 實作程式碼
+tests/conftest.py             ← Mock fixtures (綁定原專案的 Repository)
+tests/unit/test_*             ← 單元測試
+tests/integration/test_*      ← Feature-specific BDD 測試
+reports/                      ← 產生的測試報告 (已被 gitignore)
+```
+
+### 設定步驟
+
+```bash
+# 1. 建立新 repo 並複製框架檔案
+mkdir my-new-project && cd my-new-project
+git init
+# (複製上方列出的框架檔案)
+
+# 2. 放入你的規格
+mkdir -p specs/db_schema specs/features
+# 將 .dbml 檔案放入 specs/db_schema/
+# 將 .feature 檔案放入 specs/features/<domain>/
+
+# 3. 修改 CLAUDE.md
+#    - Section 2: 更新 Tech Stack (如改用 Django, Express 等)
+#    - Section 3: 更新 Project Structure Map
+
+# 4. 修改 tests/integration/conftest.py
+#    - 更新 app fixture 的 router/service 匯入
+#    - 更新 ensure_called() 的 API endpoint
+
+# 5. 建立 tests/conftest.py
+#    - 定義你的 mock repository fixtures
+
+# 6. 驗證 Docker 環境
+docker compose run --rm test  # 應成功啟動（尚無測試）
+
+# 7. 開始第一個功能
+#    /speckit.specify → /speckit.clarify → /speckit.plan → /speckit.tasks → /speckit.implement
+```
