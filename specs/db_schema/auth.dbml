@@ -1,0 +1,52 @@
+Table Users {
+    id string [pk, note: "User ID (UUID)"]
+    email string [unique, note: "Email Address"]
+    username string [unique, note: "Username"]
+    full_name string [note: "Full Name"]
+    hashed_password string [note: "Bcrypt Hash"]
+    role string [note: "admin, user"]
+    is_active boolean [default: true, note: "Account Active Status"]
+    is_verified boolean [default: false, note: "Email Verified"]
+    failed_login_count int [default: 0]
+    locked_until string [note: "Account Locked Until"]
+    last_login_at string
+    created_at string [default: "now()"]
+    updated_at string
+    note: "System Users"
+}
+
+Table AuditLogs {
+    id string [pk, note: "Log ID"]
+    action string [note: "Action Name (e.g., user.login)"]
+    actor_id string [note: "User ID who performed action"]
+    actor_email string [note: "Email of actor"]
+    ip_address string [note: "IP Address"]
+    user_agent string [note: "User Agent"]
+    status string [note: "success, failed"]
+    error_code string [note: "Error Code if failed"]
+    details json [note: "Additional Details"]
+    created_at string [default: "now()"]
+    note: "System Audit Logs"
+}
+
+Table TokenRegistry {
+    jti string [pk, note: "Token ID (UUID)"]
+    user_id string [note: "User ID"]
+    issued_at string [note: "Issue Time"]
+    expires_at string [note: "Expiration Time"]
+    revoked boolean [default: false, note: "Is Revoked"]
+    revoked_at string [note: "Revocation Time"]
+    ip_address string [note: "IP Address"]
+    user_agent string [note: "User Agent"]
+    note: "Active/Revoked JWT Tokens Registry"
+}
+
+Table RefreshTokens {
+    id string [pk, note: "Token ID"]
+    user_id string [note: "User ID"]
+    token_hash string [note: "Hash of Refresh Token"]
+    expires_at string [note: "Expiration Time"]
+    revoked boolean [default: false, note: "Is Revoked"]
+    created_at string
+    note: "Refresh Tokens"
+}

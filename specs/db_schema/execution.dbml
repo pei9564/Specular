@@ -1,0 +1,34 @@
+Table ToolCalls {
+    id string [pk, note: "Tool Call ID"]
+    message_id string [note: "The assistant message that triggered this call"]
+    tool_type string [note: "skill, mcp"]
+    tool_name string
+    input json [note: "Arguments passed to tool"]
+    output json [note: "Result from tool"]
+    status string [note: "success, failed"]
+    duration_ms int
+    error string
+    created_at string
+    note: "Tool execution records"
+}
+
+Table Runs {
+    id string [pk, note: "Run ID / Trace ID"]
+    conversation_id string [note: "Conversation ID"]
+    status string [note: "created, processing, completed, failed"]
+    timestamp string
+    input json
+    usage json
+    note: "Represents a single inference execution flow"
+}
+
+Table TokenUsage {
+    id string [pk]
+    user_id string
+    agent_id string
+    model_id string
+    prompt_tokens int
+    completion_tokens int
+    created_at string
+    note: "Usage tracking for billing/limits"
+}

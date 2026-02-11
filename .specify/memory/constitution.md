@@ -1,26 +1,10 @@
-<!--
-  Sync Impact Report
-  ==================
-  Version change: 1.0.0 → 1.1.0 (MINOR: new principle added)
-  Modified principles: None
-  Added sections:
-    - VII. Defensive Coding & Error Handling
-  Removed sections: None
-  Templates requiring updates:
-    - .specify/templates/plan-template.md: ✅ updated (VII gate added to Constitution Check)
-    - .specify/templates/spec-template.md: ✅ no update needed (unused per Principle I)
-    - .specify/templates/tasks-template.md: ✅ no update needed
-    - .specify/templates/agent-file-template.md: ✅ no update needed
-  Follow-up TODOs: None
--->
-
 # Specular-AI Constitution
 
 ## Core Principles
 
 ### I. Gherkin is King (Single Source of Truth)
 
-The `.feature` files in `specs/featuress/` are the **ONLY** specification
+The `.feature` files in `specs/features/` are the **ONLY** specification
 artifacts. No separate markdown spec files (e.g., `spec.md`) MUST be
 generated or maintained.
 
@@ -110,17 +94,45 @@ Errors MUST be visible, structured, and actionable.
   during implementation, work MUST stop and human guidance MUST be
   requested. Infinite fix-break loops are PROHIBITED.
 
+### VIII. Clarify Command Protocol (Auto-QA)
+
+**Trigger**: When the user invokes `/speckit.clarify`.
+**Role**: Acting as a Strict QA Automation Engineer.
+**Mandatory Task**: Perform a "Schema & Logic Consistency Check" WITHOUT asking for further instructions.
+
+**Checklist to Execute Automatically**:
+
+1. **DBML Consistency Check**:
+    - Scan all fields in the Gherkin feature.
+    - Compare them against the provided `@...dbml` context.
+    - *Error if:* Field names do not match exactly (e.g., `user_id` vs `userId`).
+    - *Error if:* A `NOT NULL` field in DBML is missing a validation scenario in Gherkin.
+2. **Naming Convention Check**:
+    - *Command Feature:* Must use "XX 必須/只能 YY" (Precondition) and "XX 應該 ZZ" (Postcondition).
+    - *Query Feature:* Must use "XX 必須/只能 YY" (Precondition) and "成功查詢應 XX" (Success).
+3. **@auto_generated Audit**:
+    - Review scenarios tagged `@auto_generated`.
+    - Flag any that seem redundant or logically impossible (e.g., checking uniqueness on a non-unique field).
+
+**Output Format**:
+Provide a structured report:
+
+- ✅ **PASS**: [List of passed checks]
+- ⚠️ **WARNING**: [Potential logic gaps or redundancies]
+- ❌ **FAIL**: [Schema mismatches or Naming violations]
+
 ## Development Workflow
 
 1. **Spec phase**: Author or update the `.feature` file in
-   `specs/featuress/`.
-2. **Plan phase** (`/speckit.plan`): Read the `.feature` file, produce
+   `specs/features/`.
+2. **Clarify phase** (`/speckit.clarify`): Run Auto-QA to verify Gherkin against DBML and Naming Conventions.
+3. **Plan phase** (`/speckit.plan`): Read the `.feature` file, produce
    `plan.md` with architecture, contracts, and data model.
-3. **Task phase** (`/speckit.tasks`): Decompose the plan into ordered,
+4. **Task phase** (`/speckit.tasks`): Decompose the plan into ordered,
    parallelizable tasks grouped by Gherkin Rule / Scenario.
-4. **Implement phase** (`/speckit.implement`): Execute tasks following
+5. **Implement phase** (`/speckit.implement`): Execute tasks following
    Red-Green-Refactor discipline.
-5. **Verify phase**: Run the full test suite; every Gherkin Scenario
+6. **Verify phase**: Run the full test suite; every Gherkin Scenario
    MUST map to at least one passing test.
 
 ## Quality Gates
@@ -128,6 +140,7 @@ Errors MUST be visible, structured, and actionable.
 | Gate | Criteria |
 |------|----------|
 | **Spec completeness** | Every Rule has at least one Example (happy + sad path) |
+| **Clarify Check** | Auto-QA report shows no ❌ FAIL status |
 | **Plan approval** | Constitution Check passes; no unresolved NEEDS CLARIFICATION |
 | **Task readiness** | All tasks have exact file paths and [P] / dependency annotations |
 | **Code merge** | All tests green, type-check passes, linter clean, no unrelated diff |
@@ -143,4 +156,4 @@ Errors MUST be visible, structured, and actionable.
 - Complexity beyond what a principle allows MUST be justified in the
   plan's Complexity Tracking table.
 
-**Version**: 1.1.0 | **Ratified**: 2026-02-10 | **Last Amended**: 2026-02-10
+**Version**: 1.2.0 | **Ratified**: 2026-02-11 | **Last Amended**: 2026-02-11

@@ -1,0 +1,25 @@
+Table Skills {
+    id string [pk, note: "Skill ID"]
+    name string [note: "Internal Name (e.g. calculator)"]
+    display_name string [note: "Display Name (e.g. Calculator)"]
+    description string
+    version string [note: "Version string"]
+    owner_id string [note: "Owner User ID or 'system'"]
+    visibility string [note: "public, private"]
+    status string [note: "active, deprecated, error, deleted"]
+    dependencies json [note: "List of dependencies"]
+    created_at string
+    updated_at string
+    note: "Reusable code-based tools (Packages)"
+}
+
+Table SkillFunctions {
+    id string [pk]
+    skill_id string
+    function_name string [note: "Actual function name to call"]
+    description string
+    parameters_schema json [note: "JSON Schema for parameters"]
+    return_type string
+    created_at string
+    note: "Individual functions within a Skill"
+}

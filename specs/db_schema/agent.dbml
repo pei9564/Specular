@@ -1,0 +1,39 @@
+Table Agents {
+    id string [pk, note: "Agent ID (UUID)"]
+    name string [note: "Agent Name, unique for usage"]
+    owner_id string [note: "Creator User ID"]
+    status string [note: "active, inactive, archived"]
+    mode string [note: "chat, triggers"]
+    model_id string [note: "Primary LLM Model ID"]
+    system_prompt string [note: "Default System Prompt"]
+    model_config json [note: "JSON configuration for model parameters"]
+    memory_config json [note: "JSON configuration for memory"]
+    created_at string
+    updated_at string
+    note: "AI Agents configuration"
+}
+
+Table AgentSkills {
+    agent_id string [pk]
+    skill_id string [pk]
+    enabled bool [default: true]
+    function_alias string [note: "Optional alias to resolve conflicts"]
+    created_at string
+    note: "Many-to-Many link between Agents and Skills"
+}
+
+Table AgentMcpServers {
+    agent_id string [pk]
+    mcp_id string [pk]
+    enabled bool [default: true]
+    created_at string
+    note: "Many-to-Many link between Agents and MCP Servers"
+}
+
+Table AgentKnowledgeBases {
+    agent_id string [pk]
+    kb_id string [pk]
+    retrieval_config json [note: "Per-agent retrieval settings (top_k, threshold)"]
+    created_at string
+    note: "Many-to-Many link between Agents and Knowledge Bases"
+}

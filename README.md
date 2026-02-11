@@ -13,7 +13,7 @@
 所有規格與 Schema 必須嚴格遵守 **Domain-Driven** 結構，以便 AI 載入 Context。
 
 ```text
-spec/
+specs/
 ├── db_schema/                  # [Single Source of Truth] 資料庫結構定義
 │   ├── identity.dbml           # User, Auth 相關 (定義了 Unique, Not Null 等限制)
 │   ├── ecommerce.dbml          # Order, Product 相關
@@ -58,7 +58,7 @@ Feature: [FeatureName]
 Domain: [DomainFolder]
 
 Requirement: [簡述需求，例如：使用者可以修改 Email]
-Context: @spec/db_schema/[domain].dbml
+Context: @specs/db_schema/[domain].dbml
 
 ```
 
@@ -77,7 +77,7 @@ Feature: [FeatureName]
 Domain: [DomainFolder]
 
 Requirement: [簡述需求，例如：使用者查詢自己的訂單列表]
-Context: @spec/db_schema/[domain].dbml
+Context: @specs/db_schema/[domain].dbml
 
 ```
 
@@ -96,8 +96,8 @@ Context: @spec/db_schema/[domain].dbml
 **Prompt 範本**：
 
 ```text
-/speckit.clarify @spec/features/[Domain]/[Feature].feature
-"Review the @auto_generated scenarios against the DBML: @spec/db_schema/[domain].dbml.
+/speckit.clarify @specs/featuress/[Domain]/[Feature].feature
+"Review the @auto_generated scenarios against the DBML: @specs/db_schema/[domain].dbml.
 1. Are the inferred validation rules correct?
 2. Did we miss any domain-specific business logic?"
 
@@ -113,7 +113,7 @@ Context: @spec/db_schema/[domain].dbml
 
 ```text
 /speckit.plan
-Based on @spec/features/[Domain]/[Feature].feature
+Based on @specs/featuress/[Domain]/[Feature].feature
 
 Requirements:
 1. Define Pydantic models for the payload/response.

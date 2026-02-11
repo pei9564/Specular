@@ -1,0 +1,33 @@
+Table Triggers {
+    id string [pk, note: "Trigger ID"]
+    agent_id string [note: "Owner Agent ID"]
+    type string [note: "schedule, webhook, event"]
+    name string [note: "Trigger Name"]
+    config json [note: "Configuration specific to type (cron, filter, etc)"]
+    input_template string [note: "Template string for input generation"]
+    status string [note: "active, paused"]
+    next_run_at string
+    last_run_at string
+    created_at string
+    created_by string [note: "Creator User ID"]
+    note: "Automation triggers for Agents"
+}
+
+Table TriggerExecutions {
+    id string [pk, note: "Execution ID"]
+    trigger_id string
+    agent_id string
+    status string [note: "running, completed, failed, queued"]
+    trigger_type string
+    input string [note: "Generated input for the agent"]
+    output string [note: "Agent output"]
+    error json [note: "Error details if failed"]
+    started_at string
+    finished_at string
+    duration_ms int
+    tokens_used int
+    payload json [note: "Original payload (webhook) or event data"]
+    source_ip string [note: "Source IP for webhooks"]
+    attempt int [note: "Retry attempt count"]
+    note: "History of trigger executions"
+}

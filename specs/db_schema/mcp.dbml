@@ -1,0 +1,18 @@
+Table McpServers {
+    id string [pk, note: "MCP Server ID"]
+    name string [note: "Server Name"]
+    description string
+    url string [note: "Connection URL (SSE/Stdio)"]
+    transport_type string [note: "sse, stdio, websocket"]
+    config json [note: "Connection config (env vars, args)"]
+    preset_kwargs json [note: "Default arguments"]
+    secrets json [note: "Encrypted secrets"]
+    owner_id string [note: "Owner User ID or 'system'"]
+    visibility string [note: "public, private"]
+    status string [note: "active, pending, error"]
+    tools_cache json [note: "Cached list of tools provided by this server"]
+    last_connected_at string
+    created_at string
+    updated_at string
+    note: "Model Context Protocol Servers configuration"
+}
