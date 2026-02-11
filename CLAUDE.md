@@ -4,17 +4,19 @@
 > **Last Updated**: 2026-02-10
 
 ## 1. Constitutional Mandates (Non-Negotiable)
+
 *The following rules override all other defaults.*
 
-1.  **Specification**: Gherkin (`.feature`) files in `spec/features/` are the ONLY source of truth. No `spec.md`.
-2.  **Isolation**: The "Las Vegas Rule" applies. All external calls (HTTP/DB) MUST be mocked in tests.
-3.  **Precision**: Modifications must be surgical. No "drive-by" refactoring of unrelated files.
-4.  **Standards**: Python 3.11+ Strict.
+1. **Specification**: Gherkin (`.feature`) files in `specs/features/` are the ONLY source of truth. No `spec.md`.
+2. **Isolation**: The "Las Vegas Rule" applies. All external calls (HTTP/DB) MUST be mocked in tests.
+3. **Precision**: Modifications must be surgical. No "drive-by" refactoring of unrelated files.
+4. **Standards**: Python 3.11+ Strict.
     * **Type Hints**: Mandatory on ALL signatures.
     * **Data**: Pydantic Models for all DTOs (No raw dicts).
     * **Async**: Required for I/O bound ops (FastAPI context).
 
 ## 2. Active Tech Stack
+
 * **Framework**: FastAPI + Uvicorn (ASGI)
 * **Validation**: Pydantic v2
 * **Database**: PostgreSQL 15 (relational), Milvus (vector), Redis (queue/cache)
@@ -26,10 +28,11 @@
 * **Agent Framework**: AgentScope
 
 ## 3. Project Structure Map
+
 *Current layout of key directories.*
 
 ```text
-spec/features/          -> Gherkin Source (7 features)
+specs/features/          -> Gherkin Source (7 features)
 specs/001-*/            -> Per-feature planning artifacts (plan.md, data-model.md, contracts/)
 app/services/           -> Business Logic (Service Objects)
 app/models/             -> Pydantic Schemas & DB Models
@@ -42,7 +45,7 @@ alembic/                -> Database migrations
 
 *How we build features in this repo.*
 
-1. **Define**: Create `spec/features/[name].feature`
+1. **Define**: Create `specs/features/[name].feature`
 2. **Plan**: Run `/speckit.plan`
 3. **Task**: Run `/speckit.tasks` (Generates Red/Green list)
 4. **Code**: Implement using TDD (Test -> Mock -> Code)

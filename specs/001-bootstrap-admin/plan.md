@@ -1,10 +1,11 @@
 # Implementation Plan: 建立初始管理員帳號
 
 **Branch**: `001-bootstrap-admin` | **Date**: 2026-02-10
-**Source Feature**: `spec/features/建立初始管理員帳號.feature`
+**Source Feature**: `specs/features/建立初始管理員帳號.feature`
 > **CRITICAL**: This plan is strictly based on the Scenarios and Rules defined in the Gherkin source above. No external spec.md is used.
 
 ## Constitution Check (The 7 Commandments)
+
 *GATE: Must pass before proceeding. If any item is unchecked, STOP and fix.*
 
 - [x] **I. Gherkin is King**: Plan traces directly to `.feature` scenarios (7 Rules, 9 Examples mapped below).
@@ -16,6 +17,7 @@
 - [x] **VII. Defensive Coding**: Custom exceptions (`BootstrapValidationError`, `BootstrapDatabaseError`); no bare `except`.
 
 ## Technical Context
+
 **Framework Detected**: FastAPI (via `spec/tech_stack.yaml` → `backend.framework: FastAPI`)
 **Async Requirement**: Yes (FastAPI + AsyncPG)
 **New Dependencies**: `fastapi`, `uvicorn`, `sqlalchemy[asyncio]`, `asyncpg`, `alembic`, `pydantic-settings`, `passlib[bcrypt]`, `structlog`, `email-validator`
@@ -24,24 +26,26 @@
 ---
 
 ## 1. Architecture & Design
+>
 > *Rule III: Plug-and-Play Architecture*
 
-* **Summary**: On application startup, a `BootstrapAdminService` checks if the `users` table is empty. If empty, it creates an admin account using configuration from environment variables (or defaults). The service logs to both `structlog` (application logs) and the `audit_logs` DB table. The entire flow is idempotent.
+- **Summary**: On application startup, a `BootstrapAdminService` checks if the `users` table is empty. If empty, it creates an admin account using configuration from environment variables (or defaults). The service logs to both `structlog` (application logs) and the `audit_logs` DB table. The entire flow is idempotent.
 
-* **New Components**:
-    * `app/services/bootstrap.py :: BootstrapAdminService` — Core bootstrap logic (check, create, audit)
-    * `app/models/user.py :: User` — SQLAlchemy ORM model for `users` table
-    * `app/models/audit_log.py :: AuditLog` — SQLAlchemy ORM model for `audit_logs` table
-    * `app/core/config.py :: AppSettings` — pydantic-settings configuration with `AdminBootstrapSettings` nested
-    * `app/core/database.py` — Async engine, session factory, `get_db` dependency
-    * `app/core/security.py` — Password hashing utilities (passlib bcrypt)
-    * `app/core/exceptions.py` — Custom exception classes
-    * `app/main.py` — FastAPI app with lifespan context manager
-    * `alembic/` — Migration infrastructure + initial migration
+- **New Components**:
+  - `app/services/bootstrap.py :: BootstrapAdminService` — Core bootstrap logic (check, create, audit)
+  - `app/models/user.py :: User` — SQLAlchemy ORM model for `users` table
+  - `app/models/audit_log.py :: AuditLog` — SQLAlchemy ORM model for `audit_logs` table
+  - `app/core/config.py :: AppSettings` — pydantic-settings configuration with `AdminBootstrapSettings` nested
+  - `app/core/database.py` — Async engine, session factory, `get_db` dependency
+  - `app/core/security.py` — Password hashing utilities (passlib bcrypt)
+  - `app/core/exceptions.py` — Custom exception classes
+  - `app/main.py` — FastAPI app with lifespan context manager
+  - `alembic/` — Migration infrastructure + initial migration
 
-* **Modified Components**: None (greenfield)
+- **Modified Components**: None (greenfield)
 
-* **Data Flow**:
+- **Data Flow**:
+
     ```
     FastAPI lifespan start
       → Alembic run_migrations()
@@ -54,9 +58,11 @@
     ```
 
 ## 2. Interface Contract (API & Methods)
+>
 > *Rule V: Modern Pythonic Standards (Type Hints & Pydantic)*
 
 #### A. API Endpoints (if applicable)
+
 ```
 None — this feature is a startup lifecycle event, not an API endpoint.
 ```
@@ -109,7 +115,7 @@ class BootstrapResult(BaseModel):
 
 > *Rule V: Pydantic Models & DB Schemas*
 
-* **Database Schema**: See `data-model.md` for full table definitions.
+- **Database Schema**: See `data-model.md` for full table definitions.
 
 ```python
 class User(Base):
@@ -171,25 +177,25 @@ class AuditLog(Base):
 
 > *Rule IV: Las Vegas Rule (Isolation & Mocking)*
 
-* **Unit Tests**:
-  * Target: `BootstrapAdminService`
-  * Mocks: `AsyncSession` (injected via constructor). All DB calls mocked with `AsyncMock`.
-  * Coverage: All 9 Gherkin Examples → 9 test cases minimum
-  * Password hashing: Mock `passlib.context.CryptContext` to avoid slow hashing in tests
+- **Unit Tests**:
+  - Target: `BootstrapAdminService`
+  - Mocks: `AsyncSession` (injected via constructor). All DB calls mocked with `AsyncMock`.
+  - Coverage: All 9 Gherkin Examples → 9 test cases minimum
+  - Password hashing: Mock `passlib.context.CryptContext` to avoid slow hashing in tests
 
-* **Integration Tests**:
-  * Target: FastAPI lifespan bootstrap flow
-  * Uses: In-memory SQLite or test PostgreSQL container (via `testcontainers`)
-  * Scenarios covered:
+- **Integration Tests**:
+  - Target: FastAPI lifespan bootstrap flow
+  - Uses: In-memory SQLite or test PostgreSQL container (via `testcontainers`)
+  - Scenarios covered:
     - 成功 - 首次啟動使用預設值建立管理員
     - 成功 - 首次啟動使用自訂配置
     - 跳過 - 已存在用戶帳號
     - 重複啟動 - 保持既有狀態
     - 密碼不應出現在日誌中
 
-* **Validation Tests (config)**:
-  * Target: `AdminBootstrapSettings` pydantic validator
-  * Test invalid email, weak password → `ValidationError`
+- **Validation Tests (config)**:
+  - Target: `AdminBootstrapSettings` pydantic validator
+  - Test invalid email, weak password → `ValidationError`
 
 ---
 

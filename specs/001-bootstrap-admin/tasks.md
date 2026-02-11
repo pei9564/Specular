@@ -1,9 +1,10 @@
 # Implementation Tasks: 建立初始管理員帳號
 
 **Source Plan**: `specs/001-bootstrap-admin/plan.md`
-**Source Feature**: `spec/features/建立初始管理員帳號.feature`
+**Source Feature**: `specs/features/建立初始管理員帳號.feature`
 
 > **Constitution Enforcement**:
+>
 > 1. **Surgical Precision**: Only touch files listed in the Plan.
 > 2. **Las Vegas Rule**: Tasks MUST include "Mocking" steps for external dependencies.
 > 3. **Red-Green-Refactor**: Tests must be written (and fail) BEFORE implementation code.
@@ -42,20 +43,21 @@
 ---
 
 ## Phase 3: US1 — Core Bootstrap Logic
+>
 > **Goal**: On first startup with empty users table, create admin. Skip if users exist. Idempotent on restart.
 > **Gherkin**: Rule 1 (Examples 1-2), Rule 2 (Example 3), Rule 4 (Example 6)
 > **Test criteria**: Service creates exactly 1 admin when table empty; creates 0 when table has records; re-running produces no duplicates.
 
 ### Red: Write failing tests
 
-- [ ] T014 Write test `test_bootstrap_default_credentials` in `tests/steps/test_bootstrap.py`: mock AsyncSession, verify User created with email=admin@pegatron.com, role=admin, is_active=True, must_change_password=True; assert structlog output contains "bootstrap_admin_created" event; assert warning log about default password; assert auto-generated password is 16 chars
+- [ ] T014 Write test `test_bootstrap_default_credentials` in `tests/steps/test_bootstrap.py`: mock AsyncSession, verify User created with email=<admin@pegatron.com>, role=admin, is_active=True, must_change_password=True; assert structlog output contains "bootstrap_admin_created" event; assert warning log about default password; assert auto-generated password is 16 chars
 - [ ] T015 Write test `test_bootstrap_custom_credentials` in `tests/steps/test_bootstrap.py`: mock AsyncSession + custom AdminBootstrapSettings, verify User created with custom email; assert structlog output contains "bootstrap_admin_created" event; assert NO default-password warning in logs
 - [ ] T016 Write test `test_bootstrap_skip_existing_users` in `tests/steps/test_bootstrap.py`: mock AsyncSession returning count=1, verify no INSERT executed; assert structlog output contains "bootstrap_admin_skipped" event
 - [ ] T017 Write test `test_bootstrap_idempotent_restart` in `tests/steps/test_bootstrap.py`: mock session with existing admin, verify user count unchanged after execute(); assert structlog output contains "bootstrap_admin_skipped" event
 
 ### Green: Implement service
 
-- [ ] T018 Implement BootstrapAdminService in `app/services/bootstrap.py`: constructor accepts AsyncSession + AdminBootstrapSettings, execute() method with _has_existing_users() and _create_admin_user() per plan.md contract
+- [ ] T018 Implement BootstrapAdminService in `app/services/bootstrap.py`: constructor accepts AsyncSession + AdminBootstrapSettings, execute() method with _has_existing_users() and_create_admin_user() per plan.md contract
 - [ ] T019 Implement BootstrapResult Pydantic DTO in `app/services/bootstrap.py`: action (created/skipped), admin_email, uses_default_password
 
 ### Verify
@@ -65,6 +67,7 @@
 ---
 
 ## Phase 4: US2 — Configuration Validation
+>
 > **Goal**: System fails fast on invalid email format or weak password in env vars.
 > **Gherkin**: Rule 3 (Examples 4-5)
 > **Test criteria**: Invalid email raises ValidationError; weak password raises ValidationError; both prevent startup.
@@ -85,6 +88,7 @@
 ---
 
 ## Phase 5: US3 — Audit Logging & Security
+>
 > **Goal**: Bootstrap events recorded in audit_logs; passwords never appear in logs; default password forces change.
 > **Gherkin**: Rule 5 (Example 7), Rule 6 (Examples 8-9)
 > **Test criteria**: audit_logs gets INSERT on bootstrap; structlog output contains no password string; User.must_change_password=True when using default password.
