@@ -1,0 +1,151 @@
+openapi: "3.1.0"
+info:
+  title: "CreateAgentV2 Contract"
+  version: "1.0.0"
+  description: "Create Agent with optional MCP Server bindings"
+
+paths:
+  /api/agents:
+    post:
+      summary: "Create Agent (V2)"
+      operationId: "create_agent_v2"
+      tags:
+        - agent
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAgentV2Request"
+      responses:
+        "201":
+          description: "Agent created successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateAgentV2Response"
+        "400":
+          description: "Validation error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Permission denied"
+        "404":
+          description: "Referenced resource not found"
+        "409":
+          description: "Agent name already exists"
+        "429":
+          description: "Agent quota exceeded"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    CreateAgentV2Request:
+      type: object
+      required:
+        - name
+        - model_id
+      properties:
+        name:
+          type: string
+          pattern: "^[a-zA-Z0-9_-]+$"
+          maxLength: 64
+        system_prompt:
+          type: string
+        model_id:
+          type: string
+        mode:
+          type: string
+          enum: [chat, triggers]
+          default: chat
+        model_config:
+          type: object
+          properties:
+            temperature:
+              type: number
+              minimum: 0.0
+              maximum: 2.0
+              default: 0.7
+            max_tokens:
+              type: integer
+              minimum: 1
+              default: 4096
+        memory_config:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [in_memory, database]
+              default: in_memory
+            retention_days:
+              type: integer
+              default: 30
+        mcp_server_ids:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+          default: []
+          description: "Optional MCP Server IDs to bind. Empty = V1 compatible."
+
+    CreateAgentV2Response:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        owner_id:
+          type: string
+        status:
+          type: string
+          enum: [active]
+        mode:
+          type: string
+          enum: [chat, triggers]
+        model_id:
+          type: string
+        system_prompt:
+          type: string
+          nullable: true
+        model_config:
+          type: object
+        memory_config:
+          type: object
+        mcp_servers:
+          type: array
+          items:
+            $ref: "#/components/schemas/BoundMcpServer"
+        created_at:
+          type: string
+          format: date-time
+
+    BoundMcpServer:
+      type: object
+      properties:
+        mcp_id:
+          type: string
+        name:
+          type: string
+        enabled:
+          type: boolean
+          default: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        error_code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
