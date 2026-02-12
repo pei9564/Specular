@@ -89,6 +89,52 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 **Output**: data-model.md, /contracts/*, quickstart.md, agent-specific file
 
+### Phase 1.5: BDD-Architecture Alignment Check (MANDATORY)
+
+**Prerequisites:** Phase 1 design complete (Service Architecture, Data Models, ISA Mapping filled)
+
+This phase enforces Constitution §IV-B (Entry Point Rule). It MUST run before the plan is finalized.
+
+1. **Scenario Walkthrough**: For EACH Scenario in the `.feature` file:
+   a. Identify the `When` step (the action under test)
+   b. Map it to the designed architecture: which `class.method()` does it invoke?
+   c. Trace all `Then` assertions: can they be verified from the return value or mock interactions of that method?
+   d. Record the mapping in the BDD Alignment Table
+
+2. **Entry Point Validation**: For each failure Scenario:
+   a. Ask: "Does the `When` step actually execute in my architecture?"
+   b. If a validation is placed in a layer BEFORE the `When` entry point
+      (e.g., Config validator, Pydantic model constructor, middleware):
+      - Check: Can the test `Given` step set up the invalid state and still
+        reach the `When` step?
+      - If YES → mark as PASS (early validation is testable)
+      - If NO → mark as **FAIL: Entry Point Violation**
+   c. For each FAIL: Move the validation INTO the service method that the
+      `When` step invokes. Update Section 2 (Data Models) and Section 3
+      (Service Architecture) accordingly.
+
+3. **Wiring Check**: Verify that the `When` entry point can be instantiated
+   in the test environment:
+   - All constructor dependencies are mockable or injectable
+   - If the entry point requires application-level wiring (e.g., `get_auth_service()`),
+     document the wiring logic in Service Architecture or a dedicated subsection
+
+4. **Output**: Fill the `## BDD Alignment Check` section in the plan with:
+   - Alignment table (Scenario → When step → Entry point → Result)
+   - Any Entry Point Violations found and how they were resolved
+   - Wiring dependencies identified
+
+5. **Data Integrity Reminder**: If validation logic is moved down to the Service
+   layer to satisfy the Entry Point Rule, ensure that Service method is the
+   **single point of entry** for the state change. No other component may bypass
+   the Service and modify data directly (e.g., calling the repository without
+   going through the validated Service method). If multiple callers exist,
+   document them in the Wiring Dependencies and verify each one routes through
+   the validated entry point.
+
+**Gate**: If any Scenario cannot be mapped to a testable `When` → entry point
+flow, the plan MUST NOT proceed. Fix the architecture first.
+
 ## Key rules
 
 - Use absolute paths

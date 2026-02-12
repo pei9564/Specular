@@ -84,6 +84,26 @@ What happens inside a service stays inside that service.
 - End-to-end tests are the ONLY exception and MUST be explicitly marked
   as such.
 
+### IV-B. Entry Point Rule (BDD-Architecture Alignment)
+
+Business rule validation MUST be placed as close as possible to the
+entry point that the BDD `When` step invokes.
+
+- The **entry point** is the public method that a BDD `When` step calls
+  (e.g., `AuthService.create_initial_admin()`).
+- If a validation is moved to an earlier layer (e.g., Config load,
+  Pydantic model constructor, middleware), the test environment MUST
+  be able to simulate that early interception — meaning the `Given`
+  step can set up the invalid state and the `When` step still triggers
+  the expected behavior.
+- If the test environment CANNOT simulate the early interception
+  (e.g., the `When` step never executes because the error occurs
+  before it), the validation MUST be moved down to the Service layer
+  entry point.
+- **Litmus test**: For every failure Scenario in the `.feature` file,
+  ask: "Does the `When` step actually execute in my architecture?"
+  If the answer is no, the architecture violates this rule.
+
 ### V. Modern Pythonic Standards
 
 All new code MUST meet the following bar:
@@ -180,7 +200,7 @@ Provide a structured report:
 | **Spec completeness** | Every Rule has at least one Example (happy + sad path) |
 | **Spec status** | `.feature` header contains `@ready` tag (set by `/speckit.clarify`). `@wip` specs MUST NOT enter Plan phase |
 | **Clarify Check** | Auto-QA report shows no ❌ FAIL; Audit Gate items (improvement + boundary risk) are filled |
-| **Plan approval** | Constitution Check passes; no unresolved NEEDS CLARIFICATION |
+| **Plan approval** | Constitution Check passes; no unresolved NEEDS CLARIFICATION; BDD Alignment Check passes (§IV-B) |
 | **Task readiness** | All tasks have exact file paths and [P] / dependency annotations |
 | **Code merge** | All tests green, type-check passes, linter clean, no unrelated diff |
 
@@ -195,4 +215,4 @@ Provide a structured report:
 - Complexity beyond what a principle allows MUST be justified in the
   plan's Complexity Tracking table.
 
-**Version**: 1.4.0 | **Ratified**: 2026-02-11 | **Last Amended**: 2026-02-12
+**Version**: 1.5.0 | **Ratified**: 2026-02-11 | **Last Amended**: 2026-02-12

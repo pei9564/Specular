@@ -110,7 +110,33 @@ docker compose run --rm app <command>
 | `回應, with table:` | `API_ASSERT` | `{{ response_model }}` |
 | `外部服務 {{ service_name }} 回傳:` | `MOCK_SETUP` | `app.services.{{ domain }}_service.{{ dependency }}` |
 
-## 7. File Structure
+## 7. BDD Alignment Check (Constitution §IV-B)
+
+> **Instruction**: For each Scenario, verify the `When` step maps to a testable
+> entry point. This section is filled during Phase 1.5 of `/speckit.plan`.
+
+### Alignment Table
+
+| Scenario | When Step | Entry Point | Testable? | Notes |
+|----------|-----------|-------------|-----------|-------|
+| {{ scenario_name }} | {{ when_step }} | {{ class.method }} | PASS / FAIL | {{ notes }} |
+
+### Entry Point Violations & Resolutions
+
+> List any validations that were moved to satisfy the Entry Point Rule.
+> If none, write "No violations found."
+
+- **[Violation]**: {{ description of what was misplaced }}
+  - **Resolution**: {{ where validation was moved and why }}
+
+### Wiring Dependencies
+
+> How is the entry point instantiated in tests? List constructor dependencies
+> and their mock/injection strategy.
+
+- `{{ ServiceClass }}({{ dep1 }}, {{ dep2 }})` → `{{ dep1 }}` = `AsyncMock(spec=...)`, `{{ dep2 }}` = direct instantiation
+
+## 8. File Structure
 
 > **Instruction**: List all files that will be created or modified.
 
