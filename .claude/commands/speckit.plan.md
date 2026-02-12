@@ -150,8 +150,17 @@ This phase enforces Constitution §IV-B (Entry Point Rule). It MUST run before t
    document them in the Wiring Dependencies and verify each one routes through
    the validated entry point.
 
+5. **ISA Pattern Cross-Check**: Verify that every ISA pattern type referenced
+   in §6 (ISA Mapping) exists in the matching layer of `.specify/config/isa.yml`:
+   - Execution Type `API_COMMAND` / `QUERY` → patterns must exist in `api.definitions`
+   - Execution Type `LIFECYCLE_COMMAND` → patterns must exist in `service.definitions`
+   - Shared patterns (`MOCK_SETUP`) must exist in `shared.definitions`
+   - If a referenced pattern type is missing → **STOP**. Either add it to `isa.yml`
+     or correct the §6 mapping before proceeding.
+
 **Gate**: If any Scenario cannot be mapped to a testable `When` → entry point
-flow, the plan MUST NOT proceed. Fix the architecture first.
+flow, or any §6 ISA pattern type is missing from `isa.yml`, the plan MUST NOT
+proceed. Fix the architecture first.
 
 ## Key rules
 
