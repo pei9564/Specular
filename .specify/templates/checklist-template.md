@@ -1,60 +1,56 @@
-# Quality Assurance & Pre-Merge Checklist: [FEATURE NAME]
+# Specification Audit Checklist: [FEATURE NAME]
 
-**Target Feature**: `{{ path_to_feature_file }}`
-**Related Plan**: `{{ path_to_plan_file }}`
-**Related Schema**: `{{ path_to_dbml_file }}`
+**Purpose**: Evidence-based audit of specification quality (filled by `/speckit.clarify`)
+**Created**: [DATE]
+**Feature**: `[path to .feature file]`
+**DBML**: `[path to domain .dbml file]`
+**Status**: DRAFT | READY FOR PLANNING
 
-> **Purpose**: This checklist serves as the final **Quality Gate** before merging code.
-> **Audience**: Author (Self-Review) & Reviewers.
+> **Instructions for `/speckit.clarify`**: For each item, search the `.feature` file
+> for matching evidence. If found, check the item and quote the Scenario name or
+> relevant line as evidence. If not found, leave unchecked and explain what is missing.
+> Do NOT rubber-stamp — every checked item MUST have cited evidence.
 
-## 1. Contract Adherence (The "Plan" Gate)
+## Precondition Coverage
 
-*Verify implementation matches the approved design.*
+- [ ] **NOT NULL 驗證**: 列出覆蓋必填欄位缺失的 Scenario 名稱 → _[evidence]_
+- [ ] **UNIQUE 驗證**: 列出覆蓋唯一性約束的 Scenario 名稱 → _[evidence]_
+- [ ] **業務規則驗證**: 列出覆蓋業務邏輯前置條件的 Scenario 名稱 → _[evidence]_
 
-- [ ] **[API]** Endpoints (URL, Method, Body) match the **API Specification** defined in `plan.md`.
-- [ ] **[Schema]** Pydantic Models match the **Data Contracts** defined in `plan.md`.
-- [ ] **[DBML]** Database constraints (NotNull, Unique, Length) are correctly reflected in Pydantic `Field(...)` validations.
+## Postcondition Coverage
 
-## 2. Testing Excellence (The "TDD" Gate)
+- [ ] **狀態變更驗證**: 列出驗證狀態正確更新的 Scenario 名稱 → _[evidence]_
+- [ ] **冪等性驗證**: 列出驗證重複執行安全的 Scenario 名稱 → _[evidence]_
+- [ ] **副作用驗證**: 列出驗證 side effects (通知/事件/關聯更新) 的 Scenario 名稱 → _[evidence]_
 
-*Verify both Integration and Unit test quality.*
+## Content Quality
 
-- [ ] **[BDD]** `tests/integration/test_{{ feature_slug }}.py` exists with `@scenario()` decorators.
-- [ ] **[BDD-Count]** Number of `@scenario()` decorators == number of Gherkin Scenarios in `.feature` file.
-- [ ] **[Unit]** Service methods have dedicated unit tests covering both **Happy Path** and **Edge Cases** (Sad Path).
-- [ ] **[Mock]** All external dependencies identified in `plan.md` are mocked; no real I/O in tests.
-- [ ] **[Coverage]** No `NotImplementedError` or `TODO` remains in the implementation.
+- [ ] **無實作細節**: 引述任何提及技術實作的段落（若無則標記 PASS 並說明掃描範圍） → _[evidence]_
+- [ ] **Success Criteria 可量測**: 逐條列出每個 criterion 及其量測方式 → _[evidence]_
+- [ ] **Success Criteria 無技術用語**: 確認無框架/語言/資料庫等技術名詞 → _[evidence]_
 
-## 3. Pythonic & Architectural Hygiene
+## Schema Alignment
 
-*Verify modern Python practices and modularity.*
+- [ ] **DBML 欄位一致性**: 列出 .feature 中所有欄位名，逐一對照 DBML 來源 → _[evidence]_
+- [ ] **DBML 約束覆蓋**: 每個 NOT NULL/UNIQUE/ENUM 約束都有對應的 failure Scenario → _[evidence]_
 
-- [ ] **[Types]** 100% Type Hints on all new function signatures.
-- [ ] **[DI]** Service classes use Dependency Injection; no hardcoded instantiations.
-- [ ] **[Layer]** **Router is thin**: It only handles request parsing and service delegation.
-- [ ] **[Layer]** **Service is pure**: It contains all business logic and remains testable in isolation.
-- [ ] **[Error]** Custom exceptions are used (mapped to HTTP codes), no bare `except: pass`.
+## Scope & Completeness
 
-## 4. Gherkin & Metadata Integrity
+- [ ] **範圍明確定義**: 引述 In Scope / Out of Scope 段落 → _[evidence]_
+- [ ] **假設已記錄**: 引述 Assumptions 段落 → _[evidence]_
+- [ ] **命名規範**: Precondition Rule 使用 "XX 必須/只能 YY"；Postcondition Rule 使用 "XX 應該 ZZ" → _[evidence]_
 
-*Verify traceability and cleanliness.*
+## Audit Gate (MANDATORY — clarify MUST fill these)
 
-- [ ] **[Trace]** Implementation code maps 1:1 to the Gherkin Rules.
-- [ ] **[Clean]** No "Pending" or "Skipped" steps in the final commit.
-- [ ] **[Scope]** The PR does NOT include reformatting of unrelated files ("Drive-by refactoring").
+- [ ] **至少 1 項改善建議**: 描述發現的可優化點或潛在風險 → _[finding]_
+- [ ] **至少 1 項邊界風險**: 描述未覆蓋或弱覆蓋的邊界案例 → _[finding]_
 
-## 5. Deployment Readiness
+> If unable to identify findings for the Audit Gate, re-examine with adversarial lens:
+> "What would a hostile user, edge case, or race condition break?"
+> The audit is NOT complete until both Audit Gate items are filled.
 
-- [ ] **[Docker]** `docker compose run --rm test` passes all tests (no local-only execution).
-- [ ] **[Docker]** `docker compose run --rm lint` passes type checks with zero errors.
-- [ ] **[Docker]** `Dockerfile` and `docker-compose.yml` are present and up to date.
-- [ ] **[Report]** `review.md` generated via `/speckit.review` and up to date.
-- [ ] **[Async]** `async/await` is used correctly for I/O bound operations.
-- [ ] **[Files]** No circular imports introduced.
+## Notes
 
----
-
-**Review Decision:**
-
-- [ ] ✅ **Ready to Merge**: All checks passed.
-- [ ] 🚧 **Needs Work**: Violations found in section [X].
+- This checklist is filled by `/speckit.clarify`, NOT by `/speckit.specify`
+- All items must pass (including Audit Gate) before `.feature` transitions from `@wip` to `@ready`
+- Items left unchecked after audit require spec updates and re-audit

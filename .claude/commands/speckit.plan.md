@@ -20,6 +20,12 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
 
+0. **Pre-check: Spec readiness gate**:
+   - Read the `.feature` file header tags
+   - If `@wip` is present → **STOP**. Output: `Spec is still in DRAFT (@wip). Run /speckit.clarify to audit and sign-off before planning.`
+   - If `@ready` is present → proceed
+   - This gate is mandated by Constitution §Quality Gates ("Spec status")
+
 1. **Setup**: Run `.specify/scripts/bash/setup-plan.sh --json` from repo root and parse JSON for FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 
 2. **Load context**: Read FEATURE_SPEC and `.specify/memory/constitution.md`. Load IMPL_PLAN template (already copied).

@@ -153,11 +153,14 @@ Provide a structured report:
 
 ## Development Workflow
 
-1. **Spec phase**: Author or update the `.feature` file in
-   `specs/features/`. If no DBML exists for the domain, generate a
-   provisional schema at `specs/db_schema/<domain>.dbml` (see §I-B).
-2. **Clarify phase** (`/speckit.clarify`): Run Auto-QA to verify
-   Gherkin against DBML and Naming Conventions. If the DBML is still
+1. **Spec phase** (`/speckit.specify`): Author the `.feature` file in
+   `specs/features/` and generate provisional DBML if needed (see §I-B).
+   Output status: **[DRAFT]**. Produce an empty `requirements.md`
+   checklist — do NOT self-validate.
+2. **Clarify phase** (`/speckit.clarify`): Perform evidence-based audit
+   of the `.feature` file. Fill `requirements.md` with cited evidence
+   for each item. Transition status from `@wip` → `@ready` only when
+   all items pass including the mandatory Audit Gate. If DBML is still
    `@provisional`, flag it for ratification.
 3. **Plan phase** (`/speckit.plan`): Read the `.feature` file, produce
    `plan.md` with architecture, contracts, and data model. Any
@@ -175,7 +178,8 @@ Provide a structured report:
 | Gate | Criteria |
 |------|----------|
 | **Spec completeness** | Every Rule has at least one Example (happy + sad path) |
-| **Clarify Check** | Auto-QA report shows no ❌ FAIL status |
+| **Spec status** | `.feature` header contains `@ready` tag (set by `/speckit.clarify`). `@wip` specs MUST NOT enter Plan phase |
+| **Clarify Check** | Auto-QA report shows no ❌ FAIL; Audit Gate items (improvement + boundary risk) are filled |
 | **Plan approval** | Constitution Check passes; no unresolved NEEDS CLARIFICATION |
 | **Task readiness** | All tasks have exact file paths and [P] / dependency annotations |
 | **Code merge** | All tests green, type-check passes, linter clean, no unrelated diff |
@@ -191,4 +195,4 @@ Provide a structured report:
 - Complexity beyond what a principle allows MUST be justified in the
   plan's Complexity Tracking table.
 
-**Version**: 1.3.0 | **Ratified**: 2026-02-11 | **Last Amended**: 2026-02-12
+**Version**: 1.4.0 | **Ratified**: 2026-02-11 | **Last Amended**: 2026-02-12
