@@ -8,7 +8,7 @@
 *The following rules override all other defaults.*
 
 1. **Specification**: Gherkin (`.feature`) files are the ONLY functional source of truth.
-2. **Schema First**: Data structures defined in `specs/db_schema/*.dbml` are the **Absolute Truth** for field names and constraints.
+2. **Schema First**: Data structures in `specs/db_schema/*.dbml` are the **Absolute Truth** for field names and constraints. Provisional schemas (`@provisional`) are auto-generated during Spec phase and ratified during Plan phase. See `constitution.md §I-B` for lifecycle rules.
 3. **Isolation**: The "Las Vegas Rule" applies. All external calls (HTTP/DB) MUST be mocked in tests.
 4. **CQRS**: Strict separation between **COMMAND** (State Change) and **QUERY** (Read Only).
 5. **Standards**: Python 3.12+ Strict.

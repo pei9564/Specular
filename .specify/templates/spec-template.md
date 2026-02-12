@@ -12,10 +12,32 @@
 
 #
 
+# === SCHEMA DISCOVERY (execute before writing scenarios) ===
+#
+# 1. Check: does specs/db_schema/<domain>.dbml exist?
+#    - YES (ratified, no @provisional tag) → Read it. Use EXACT field names.
+#    - YES (provisional, has @provisional tag) → Read it. Extend if feature
+#      needs new tables/fields. Keep @provisional on new parts only.
+#    - NO → Generate provisional DBML BEFORE writing any scenario:
+#      a. Infer tables from nouns in the feature description
+#      b. Infer fields from attributes and scenario data
+#      c. Infer constraints from business rules:
+#         NOT NULL (required fields), UNIQUE (identifiers),
+#         ENUM (status/role values), FK (relationships)
+#      d. Write to specs/db_schema/<domain>.dbml with @provisional header
+#      e. All scenarios below MUST use the generated DBML field names
+#
+# 2. Background data table MUST reference DBML fields with source tracking:
+#    | entity | field | value | source          |
+#    | users  | email | ...   | auth.dbml       |
+#    | users  | role  | ...   | auth.dbml @prov |
+#    The "source" column tracks whether a field comes from ratified DBML
+#    or a provisional (@prov) definition.
+#
 # === CRITICAL: AUTO-FILL & INFERENCE MODE ===
-
+#
 # You are NOT a simple scribe. You MUST actively infer missing requirements
-
+#
 # 1. READ DBML CONTEXT: Check the provided `@...dbml` files. Use EXACT field names
 
 # 2. INFER RULES
@@ -72,10 +94,14 @@ Feature: [Action Name - e.g., RegisterUser or GetUser]
 # Summary: [Brief description of the business goal]
 
   Background:
-    Given the following system state (based on DBML context):
-      # Initialize strict minimum data required for these scenarios
+    # REQUIRED: Use structured data table format. Natural language Given
+    # statements alone are NOT acceptable for Background.
+    # The "source" column MUST indicate the DBML origin of each field.
+    Given the following system state:
+      | entity | field | value | source          |
       # Example:
-      # | table | field | value |
+      # | users  | role  | admin | auth.dbml       |
+      # | users  | email | ...   | auth.dbml @prov |
 
 # =========================================================================
 

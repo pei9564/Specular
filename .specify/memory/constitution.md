@@ -16,6 +16,36 @@ generated or maintained.
   resolved by updating the `.feature` file — never by inventing
   requirements in downstream artifacts.
 
+### I-B. Schema as Living Truth (DBML Lifecycle)
+
+Database schema definitions in `specs/db_schema/<domain>.dbml` follow a
+two-phase lifecycle:
+
+1. **Provisional** (`@provisional` tag present): Auto-generated during
+   the Spec phase based on entities inferred from the feature description.
+   Field names, types, and constraints are best-effort drafts.
+   - Scenarios in `.feature` files MUST use provisional field names
+     as-is (no separate guesses).
+   - Provisional schemas MUST be reviewed and ratified before the
+     Plan phase begins.
+
+2. **Ratified** (no `@provisional` tag): Reviewed during Clarify or
+   Plan phase. Once ratified, DBML becomes the Absolute Truth per
+   existing convention.
+   - Any subsequent feature in the same domain MUST extend (not
+     replace) the ratified schema.
+   - Field renames after ratification require a migration note in
+     the plan.
+
+**Generation Rules**:
+- If `specs/db_schema/<domain>.dbml` does not exist when a feature
+  enters the Spec phase, the specify step MUST generate a provisional
+  DBML before writing scenarios.
+- If it already exists (ratified), new tables/fields are appended
+  with `@provisional` on the new parts only.
+- A domain DBML file MUST NEVER be regenerated from scratch if a
+  ratified version exists.
+
 ### II. Surgical Precision (Team Collaboration)
 
 This is a multi-contributor repository. Git conflicts are the enemy.
@@ -124,10 +154,15 @@ Provide a structured report:
 ## Development Workflow
 
 1. **Spec phase**: Author or update the `.feature` file in
-   `specs/features/`.
-2. **Clarify phase** (`/speckit.clarify`): Run Auto-QA to verify Gherkin against DBML and Naming Conventions.
+   `specs/features/`. If no DBML exists for the domain, generate a
+   provisional schema at `specs/db_schema/<domain>.dbml` (see §I-B).
+2. **Clarify phase** (`/speckit.clarify`): Run Auto-QA to verify
+   Gherkin against DBML and Naming Conventions. If the DBML is still
+   `@provisional`, flag it for ratification.
 3. **Plan phase** (`/speckit.plan`): Read the `.feature` file, produce
-   `plan.md` with architecture, contracts, and data model.
+   `plan.md` with architecture, contracts, and data model. Any
+   `@provisional` DBML MUST be ratified (tag removed) before plan is
+   approved.
 4. **Task phase** (`/speckit.tasks`): Decompose the plan into ordered,
    parallelizable tasks grouped by Gherkin Rule / Scenario.
 5. **Implement phase** (`/speckit.implement`): Execute tasks following
@@ -156,4 +191,4 @@ Provide a structured report:
 - Complexity beyond what a principle allows MUST be justified in the
   plan's Complexity Tracking table.
 
-**Version**: 1.2.0 | **Ratified**: 2026-02-11 | **Last Amended**: 2026-02-11
+**Version**: 1.3.0 | **Ratified**: 2026-02-11 | **Last Amended**: 2026-02-12
