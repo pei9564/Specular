@@ -41,6 +41,8 @@ Execution steps:
 
 ## Phase 2: Evidence-Based Audit
 
+**Output `## Phase 2: Evidence-Based Audit` as a visible heading to the user before starting this phase.**
+
 4. **Fill the requirements checklist** (`FEATURE_DIR/checklists/requirements.md`):
 
    For EACH checklist item:
@@ -97,7 +99,19 @@ Execution steps:
    - Review scenarios tagged `@auto_generated`
    - Flag any that seem redundant or logically impossible
 
+10. **Output Phase 2 Audit Summary** to the user before proceeding:
+    ```
+    ### Phase 2 Audit Summary
+    - Checklist: X/Y items passed, Z items need attention
+    - [CRITICAL] markers found: N (must resolve in Phase 3)
+    - DBML status: provisional/ratified
+    - @auto_generated: N scenarios reviewed, M flagged
+    - Proceeding to Phase 3...
+    ```
+
 ## Phase 3: Ambiguity Resolution (Interactive)
+
+**Output `## Phase 3: Ambiguity Resolution` as a visible heading to the user before starting this phase.**
 
 9. Perform a structured ambiguity & coverage scan using this taxonomy. For each category, mark status: Clear / Partial / Missing. Produce an internal coverage map used for prioritization (do not output raw map unless no questions will be asked).
 
@@ -222,6 +236,8 @@ Execution steps:
 
 ## Phase 4: Fix, Validate & Sign-Off
 
+**Output `## Phase 4: Fix, Validate & Sign-Off` as a visible heading to the user before starting this phase.**
+
 13. **Address audit failures**: For each unchecked item in the checklist:
     - Update the `.feature` file to address the gap (add missing scenarios, fix naming, etc.)
     - Re-check the item with new evidence
@@ -253,6 +269,8 @@ Execution steps:
     - `checklists/requirements.md` (with evidence and audit results)
 
 ## Phase 5: Report
+
+**Output `## Phase 5: Audit Report` as a visible heading to the user before starting this phase.**
 
 18. **Output structured report**:
 
