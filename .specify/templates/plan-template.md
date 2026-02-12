@@ -3,9 +3,26 @@
 **Branch**: `{{ branch_name }}`
 **Source Feature**: `{{ path_to_feature_file }}`
 **Instruction Set**: `.specify/config/isa.yml`
+**Execution Type**: `{{ API_COMMAND | LIFECYCLE_COMMAND | QUERY }}`
 
-## 1. API Specification (The External Interface)
->
+<!--
+  Execution Type is determined from the .feature file:
+  - API_COMMAND:       COMMAND type + triggered by user action via HTTP (has API caller)
+  - LIFECYCLE_COMMAND: COMMAND type + triggered by system event (startup, cron, queue, migration)
+  - QUERY:            QUERY type (read-only, always has HTTP endpoint)
+
+  The Execution Type drives which variant of §1 and §6 to use,
+  and whether §3 needs an Application Wiring subsection.
+-->
+
+## 1. External Interface
+
+<!--
+  Fill ONLY the variant matching your Execution Type. Delete the others.
+-->
+
+### Variant A: API Contract (API_COMMAND / QUERY)
+
 > **Purpose**: Defines the HTTP contract for Integration Tests.
 
 ```yaml
@@ -27,6 +44,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/{{ response_model }}'
 
+```
+
+### Variant B: Lifecycle Hook (LIFECYCLE_COMMAND)
+
+> **Purpose**: Defines the system event trigger. No HTTP endpoint.
+
+**Trigger**: {{ event type — e.g., FastAPI lifespan, cron schedule, message queue consumer }}
+**Entry Point**: `{{ module.function or Class.method }}`
+**Fail Behavior**: {{ fail-fast (abort) | degrade (log + continue) | retry (with backoff) }}
+
+```python
+# {{ trigger registration code snippet }}
 ```
 
 ## 2. Data Models (The Shared Contract)
@@ -68,6 +97,28 @@ class {{ domain_capitalized }}Service:
 
 ```
 
+### Application Wiring (LIFECYCLE_COMMAND only)
+
+<!--
+  For LIFECYCLE_COMMAND features, the Service is not invoked by a Router.
+  Document how the Service is instantiated and called during the system event.
+  For API_COMMAND / QUERY, delete this subsection — the Router handles wiring via Depends().
+-->
+
+> **Instruction**: Define how the Service is assembled and invoked at the trigger point.
+> This must match the entry point declared in §1 Variant B.
+
+```python
+# {{ wiring location, e.g., app/main.py or app/startup.py }}
+
+def get_{{ domain }}_service() -> {{ domain_capitalized }}Service:
+    """Assemble dependencies and return configured service instance."""
+    # config = {{ config_class }}()
+    # repo = {{ repo_implementation }}()
+    # return {{ domain_capitalized }}Service(repo=repo, config=config)
+    raise NotImplementedError("Wiring pending implementation.")
+```
+
 ## 4. Mocking Strategy (The Las Vegas Rule)
 
 > **Instruction**: List external dependencies to be mocked in both Unit and Integration tests.
@@ -102,7 +153,21 @@ docker compose run --rm app <command>
 ## 6. ISA Mapping (Test Generation Guide)
 
 > **Instruction**: Map Gherkin Phrases to ISA Patterns.
-> This section guides Step 6 (`/speckit.tasks`) in generating `tests/integration/`.
+> This section guides `/speckit.tasks` in generating `tests/integration/`.
+>
+> **Pattern selection by Execution Type**:
+> - **API_COMMAND / QUERY**: Use `API_CALL` / `API_ASSERT` patterns (tests use HTTP client)
+> - **LIFECYCLE_COMMAND**: Use `SERVICE_CALL` / `SERVICE_ASSERT` patterns (tests invoke Service directly)
+
+### ISA Pattern Reference
+
+| Execution Type | When Pattern | Then Pattern | Test Trigger |
+|----------------|-------------|-------------|--------------|
+| API_COMMAND | `API_CALL` | `API_ASSERT` | `httpx` TestClient → Router → Service |
+| LIFECYCLE_COMMAND | `SERVICE_CALL` | `SERVICE_ASSERT` | Direct `await service.method()` |
+| QUERY | `API_CALL` | `API_ASSERT` | `httpx` TestClient → Router → Service |
+
+### Gherkin → ISA Mapping
 
 | Gherkin Phrase | ISA Pattern | Target Implementation |
 | --- | --- | --- |
@@ -162,3 +227,13 @@ Dockerfile
 docker-compose.yml
 requirements.txt
 ```
+
+## 9. Deviation Log
+
+> **Instruction**: Record any template sections that were intentionally skipped,
+> replaced, or adapted for this feature. Every deviation MUST have a rationale.
+> If no deviations, write "No deviations from template."
+
+| Template Section | Status | Rationale |
+|-----------------|--------|-----------|
+| {{ section_name }} | USED / REPLACED / SKIPPED | {{ reason }} |

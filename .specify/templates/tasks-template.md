@@ -2,6 +2,7 @@
 
 **Source Plan**: `{{ path_to_plan_file }}`
 **ISA Config**: `.specify/config/isa.yml`
+**Execution Type**: `{{ execution_type }}`
 
 ## Phase 1: Structure & Skeletons (The Foundation)
 >
@@ -11,8 +12,24 @@
   - *Action*: Port Pydantic models from **Plan Section 2**.
 - [ ] **[Skeleton]** Create `app/services/{{ domain }}_service.py`.
   - *Action*: Port Class/Method signatures from **Plan Section 3** (keep `NotImplementedError`).
+
+<!--
+  Phase 1 branches by Execution Type:
+  - API_COMMAND / QUERY: Create a Router that delegates to the Service via Depends().
+  - LIFECYCLE_COMMAND: Create application wiring (no Router). The Service is invoked
+    by a system event (startup, cron, etc.), not by an HTTP endpoint.
+-->
+
+### Variant A: API_COMMAND / QUERY
+
 - [ ] **[Skeleton]** Create `app/routers/{{ domain }}.py`.
   - *Action*: Define FastAPI route per **Plan Section 1** (Inject Service and call it).
+
+### Variant B: LIFECYCLE_COMMAND
+
+- [ ] **[Skeleton]** Create application wiring per **Plan Section 3** (Application Wiring subsection).
+  - *Action*: Define the factory/assembly function that instantiates the Service with its dependencies.
+  - *Location*: As specified in **Plan Section 1** Variant B (entry point).
 
 ## Phase 2: Unit Tests (The Inner Loop — "RED" State)
 >
@@ -25,14 +42,21 @@
 
 ## Phase 3: BDD Integration Tests (The Outer Loop — MANDATORY)
 >
-> *Goal: Generate `pytest-bdd` step definitions that wire every Gherkin Scenario to an API call.*
+> *Goal: Generate `pytest-bdd` step definitions that wire every Gherkin Scenario to a test.*
 >
 > **GATE**: This phase is **NOT optional**. Every Gherkin Scenario in the feature file MUST have a corresponding integration test. Skip = checklist failure.
->
+
+<!--
+  Phase 3 infrastructure docs branch by Execution Type.
+  Fill ONLY the variant matching the Execution Type from the Plan header. Delete the other.
+-->
+
+### Infrastructure: API_COMMAND / QUERY
+
 > **Architecture**: All BDD tests MUST use the shared infrastructure in `tests/integration/conftest.py`:
 > - **`table_to_dicts(datatable)`** — converts pytest-bdd datatable (`list[list[str]]`) to `list[dict]`. NEVER parse datatables manually.
 > - **`context` fixture** — mutable state carrier for Given → When → Then. When steps accumulate `context["payload"]` from data tables. Then steps read `context["response"]`.
-> - **`ensure_called(context, client, mock_mcp_repo)`** — lazy API trigger. Called by Then steps before any assertion. Fires the HTTP request ONCE per scenario, configures mocks from `context["background_*"]`, caches response.
+> - **`ensure_called(context, client, {{ mock_repo }})`** — lazy API trigger. Called by Then steps before any assertion. Fires the HTTP request ONCE per scenario, configures mocks from `context["background_*"]`, caches response.
 > - **`app` / `client` fixtures** — FastAPI app factory with mocked repos + auth middleware.
 > - **Common Given steps** — auth, background entities, preconditions. Do NOT redefine these in test files.
 >
@@ -41,11 +65,32 @@
 > 2. Feature-specific When steps (API_CALL) — parse data tables into `context["payload"]`
 > 3. Feature-specific Then steps (API_ASSERT / DB_ASSERT) — call `ensure_called()`, then assert
 
+### Infrastructure: LIFECYCLE_COMMAND
+
+> **Architecture**: All BDD tests MUST use the shared infrastructure in `tests/integration/conftest.py`:
+> - **`table_to_dicts(datatable)`** — converts pytest-bdd datatable (`list[list[str]]`) to `list[dict]`. NEVER parse datatables manually.
+> - **`context` fixture** — mutable state carrier for Given → When → Then. Given steps set up `context["config"]`. When steps invoke the service directly and store results in `context["result"]`.
+> - **No HTTP client** — LIFECYCLE_COMMAND tests do NOT use `app`, `client`, or `ensure_called()`. The service is instantiated directly with mocked dependencies.
+> - **Common Given steps** — background entities, preconditions. Do NOT redefine these in test files.
+>
+> **Context flow**:
+> - `context["config"]` ← Given steps (configuration setup, e.g., `{{ config_class }}`)
+> - `context["result"]` ← When step stores return value OR caught exception
+>
+> **Test file structure**: Each `test_{{ feature_slug }}.py` contains ONLY:
+> 1. `@scenario()` decorators — 1:1 mapping from Gherkin
+> 2. Feature-specific Given steps (CONFIG_SETUP) — set up config in `context["config"]`
+> 3. Feature-specific When steps (SERVICE_CALL) — `await {{ service }}.{{ method }}()`, store result or exception
+> 4. Feature-specific Then steps (SERVICE_ASSERT / EXCEPTION_ASSERT) — assert `context["result"]`
+
+### Tasks
+
 - [ ] **[ISA-Map]** Generate `tests/integration/test_{{ feature_slug }}.py`.
   - **Source**: Read `.specify/config/isa.yml` and match with **Plan Section 6** (ISA Mapping).
-  - **Shared Infra**: Import `table_to_dicts` and `ensure_called` from `tests.integration.conftest`. Reuse `context`, `app`, `client` fixtures — do NOT redefine them.
+  - **ISA Layer**: Use the `api` layer for API_COMMAND / QUERY, or the `service` layer for LIFECYCLE_COMMAND.
+  - **Shared Infra**: Import `table_to_dicts` from `tests.integration.conftest`. Reuse `context` fixture — do NOT redefine it.
   - **Action**: Create `pytest-bdd` step definitions that link to `{{ path_to_feature_file }}`.
-  - **Context Flow**: When steps parse Gherkin data tables via `table_to_dicts(datatable)` into `context["payload"]`. Then steps call `ensure_called()` before asserting against `context["response"]`.
+  - **Context Flow**: Follow the context flow documented in the Infrastructure section above.
   - **Coverage rule**: Count Gherkin Scenarios in `.feature` file → assert equal number of `@scenario()` decorators in test file.
 - [ ] **[Verify-BDD]** Run BDD tests in Docker → confirm scenario count matches.
       *Command*: `docker compose run --rm test pytest tests/integration/test_{{ feature_slug }}.py -v`

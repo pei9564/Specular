@@ -30,16 +30,30 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 2. **Load context**: Read FEATURE_SPEC and `.specify/memory/constitution.md`. Load IMPL_PLAN template (already copied).
 
-3. **Execute plan workflow**: Follow the structure in IMPL_PLAN template to:
+3. **Determine Execution Type**: Inspect the `.feature` file to classify the feature:
+   - Read the SPEC-KIT SYSTEM INSTRUCTION block for `Type:` (COMMAND or QUERY)
+   - If COMMAND, determine sub-type from the feature's trigger:
+     - **API_COMMAND**: The `When` steps describe a user-initiated action via API
+       (e.g., "When the user creates...", "When the user submits...")
+     - **LIFECYCLE_COMMAND**: The `When` steps describe a system-initiated event
+       (e.g., "When the system starts up", "When the scheduled job runs",
+       "When the message is consumed")
+   - If QUERY → **QUERY**
+   - Set the `**Execution Type**` field in IMPL_PLAN header
+   - Delete the unused §1 variant (keep only the matching one)
+   - For API_COMMAND / QUERY: delete the "Application Wiring" subsection in §3
+   - For LIFECYCLE_COMMAND: delete the "Variant A" in §1
+
+4. **Execute plan workflow**: Follow the structure in IMPL_PLAN template to:
    - Fill Technical Context (mark unknowns as "NEEDS CLARIFICATION")
    - Fill Constitution Check section from constitution
    - Evaluate gates (ERROR if violations unjustified)
    - Phase 0: Generate research.md (resolve all NEEDS CLARIFICATION)
-   - Phase 1: Generate data-model.md, contracts/, quickstart.md
+   - Phase 1: Generate data-model.md, contracts/ (API types only), quickstart.md
    - Phase 1: Update agent context by running the agent script
    - Re-evaluate Constitution Check post-design
 
-4. **Stop and report**: Command ends after Phase 2 planning. Report branch, IMPL_PLAN path, and generated artifacts.
+5. **Stop and report**: Command ends after Phase 2 planning. Report branch, IMPL_PLAN path, and generated artifacts.
 
 ## Phases
 
@@ -75,10 +89,14 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Validation rules from requirements
    - State transitions if applicable
 
-2. **Generate API contracts** from functional requirements:
-   - For each user action → endpoint
-   - Use standard REST/GraphQL patterns
-   - Output OpenAPI/GraphQL schema to `/contracts/`
+2. **Generate external interface** based on Execution Type:
+   - **API_COMMAND / QUERY**: Generate API contracts from functional requirements.
+     For each user action → endpoint. Use standard REST/GraphQL patterns.
+     Output OpenAPI/GraphQL schema to `/contracts/`.
+   - **LIFECYCLE_COMMAND**: No API contracts. Fill §1 Variant B (Lifecycle Hook)
+     with trigger mechanism, entry point, and fail behavior.
+     Fill §3 Application Wiring subsection with dependency assembly logic.
+     Record `contracts/ → SKIPPED` in the Deviation Log.
 
 3. **Agent context update**:
    - Run `.specify/scripts/bash/update-agent-context.sh claude`

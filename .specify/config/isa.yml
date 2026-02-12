@@ -1,154 +1,344 @@
 # .speckit/config/isa.yml
 # Instruction Set Architecture for Test Generation
 #
-# Defines the mapping from Gherkin step patterns to pytest-bdd step definitions.
-# All templates use the Context Flow pattern:
-#   context["payload"]   ← When steps accumulate from data tables
-#   context["response"]  ← ensure_called() fires once, caches httpx Response
-#   context["background_*"] ← Given steps store background entity data
+# Three layers:
+#   1. shared   — Infrastructure contract (conftest fixtures, context flow, boundary rules)
+#   2. api      — Patterns for API_COMMAND / QUERY (HTTP client flow)
+#   3. service  — Patterns for LIFECYCLE_COMMAND (direct service invocation flow)
 #
-# Shared infrastructure lives in tests/integration/conftest.py:
-#   table_to_dicts()  — converts datatable (list[list[str]]) to list[dict]
-#   context fixture   — mutable state carrier for Given → When → Then
-#   ensure_called()   — lazy API trigger (fires once per scenario)
-#   app / client      — FastAPI app factory with mocked dependencies
-#   Common Given steps — auth, background entities, preconditions
+# All python_template blocks use {{ placeholder }} syntax.
+# Placeholders are filled from the Plan file during task generation.
+#
+# Placeholder Reference:
+#   {{ mock_repo }}     — Plan §4 (Mocking Strategy)    e.g. mock_user_repo
+#   {{ service }}       — Plan §3 (Service Architecture) e.g. auth_service
+#   {{ method }}        — Plan §3                        e.g. create_initial_admin
+#   {{ domain }}        — Plan header                    e.g. auth
+#   {{ feature_slug }}  — Plan header                    e.g. initial_admin
+#   {{ config_class }}  — Plan §2 (Data Models)          e.g. InitialAdminConfig
+#   {{ domain_capitalized }} — Plan header (capitalized)  e.g. Auth
+#   {{ entry_point }}   — Plan §1 (External Interface)   e.g. AuthService.create_initial_admin
 
-definitions:
-  # --- 1. MOCK_SETUP (Given) ---
-  # Background data from Gherkin tables → context["background_*"]
-  # Common steps are ALREADY defined in tests/integration/conftest.py.
-  # Feature-specific Given steps go in the test file.
-  - pattern: "系統中存在以下 {entity_type}:"
-    type: "MOCK_SETUP"
-    context: "Given"
-    notes: "Parse data table into context for mock configuration."
-    python_template: |
-      # Defined in tests/integration/conftest.py (reusable across features):
-      @given("系統中存在以下 {entity_type}:")
-      def given_background_entities(datatable: Any, context: dict[str, Any]) -> None:
-          context["background_{entity_key}"] = table_to_dicts(datatable)
+# =============================================================================
+# Layer 1: SHARED — Cross-type infrastructure
+# =============================================================================
+# Defines the conftest.py contract that ALL execution types share.
 
-  - pattern: '使用者 "{user_id}" 已登入且擁有 "{permission}" 權限'
-    type: "MOCK_SETUP"
-    context: "Given"
-    notes: "Auth middleware mock — defined in conftest.py."
-    python_template: |
-      # Defined in tests/integration/conftest.py (reusable):
-      @given(parsers.parse('使用者 "{user_id}" 已登入且擁有 "{permission}" 權限'))
-      def given_user_logged_in(user_id: str, permission: str) -> None:
-          pass  # Handled by app fixture middleware
+shared:
+  context_fixture:
+    description: |
+      Mutable dict, state carrier for Given → When → Then.
+      Provided by tests/integration/conftest.py as a pytest fixture.
+    keys:
+      - "context['background_*']  ← Given steps (mock data from Gherkin tables)"
+      - "context['result']        ← When step stores return value or caught exception"
+      - "context['payload']       ← (API types) When steps accumulate from data tables"
+      - "context['response']      ← (API types) ensure_called() caches httpx Response"
+      - "context['config']        ← (Service types) Given steps set up config object"
 
-  # --- 2. API_CALL (When) ---
-  # Parse Gherkin data tables into context["payload"].
-  # The actual HTTP request is NOT fired here — deferred to API_TRIGGER.
-  - pattern: "使用者創建 {resource}:"
-    type: "API_CALL"
-    context: "When"
-    notes: "Parse field/value table into context['payload']. Feature-specific."
-    python_template: |
-      @when("使用者創建 {resource}:")
-      def when_create_resource(datatable: Any, context: dict[str, Any]) -> None:
-          for row in table_to_dicts(datatable):
-              context["payload"][row["field"]] = row["value"]
+  helpers:
+    - name: "table_to_dicts"
+      location: "tests/integration/conftest.py"
+      signature: "table_to_dicts(datatable: list[list[str]]) -> list[dict]"
+      description: "Converts pytest-bdd datatable to list[dict]. NEVER parse datatables manually."
 
-  - pattern: "同時綁定 {relation}:"
-    type: "API_CALL"
-    context: "When"
-    notes: "Parse ID list table, append to context['payload']. Feature-specific."
-    python_template: |
-      @when("同時綁定 {relation}:")
-      def when_bind_relation(datatable: Any, context: dict[str, Any]) -> None:
-          id_column = datatable[0][0]  # e.g. "mcp_id"
-          context["payload"][f"{id_column}s"] = [
-              row[id_column] for row in table_to_dicts(datatable)
-          ]
+  boundary_rules:
+    conftest_owns:
+      - "context fixture (dict[str, Any])"
+      - "table_to_dicts() helper"
+      - "app / client fixtures (API types only)"
+      - "Common Given steps: background entities, auth middleware"
+    feature_file_owns:
+      - "@scenario() decorators (1:1 from Gherkin)"
+      - "Feature-specific Given steps (config setup, domain-specific preconditions)"
+      - "Feature-specific When steps"
+      - "Feature-specific Then steps"
+    collision_prevention:
+      - "Function names MUST include domain or feature context"
+      - "BAD:  when_create_resource, then_failed"
+      - "GOOD: when_execute_initial_admin_creation, then_initial_admin_creation_should_fail"
 
-  # --- 3. API_TRIGGER ---
-  # Bridges API_CALL (When) → API_ASSERT (Then).
-  # Fires the HTTP request ONCE after all When steps complete.
-  # Defined as a helper function in tests/integration/conftest.py.
-  #
-  # IMPORTANT: This is NOT a step definition — it's called by Then steps.
-  # Then steps must call ensure_called() before any assertion.
-  - pattern: "(internal — called by Then steps)"
-    type: "API_TRIGGER"
-    context: "Then (internal)"
-    notes: |
-      ensure_called() is defined in tests/integration/conftest.py.
-      It configures mocks from context["background_*"] + context["payload"],
-      fires the HTTP request, and caches the response in context["response"].
-      Idempotent: fires only once per scenario.
-    python_template: |
-      # Defined in tests/integration/conftest.py (reusable):
-      def ensure_called(
-          context: dict[str, Any],
-          client: TestClient,
-          mock_mcp_repo: AsyncMock,
-      ) -> None:
-          if context["response"] is not None:
-              return
-          # Configure mocks from context["background_*"] + requested IDs
-          # Fire POST /api/{resource} with context["payload"]
-          # Store response in context["response"]
+  definitions:
+    # --- MOCK_SETUP (Given) ---
+    # Background data from Gherkin tables → context["background_*"]
+    # Common steps are ALREADY defined in tests/integration/conftest.py.
+    # Feature-specific Given steps go in the test file.
+    - pattern: "系統中存在以下 {entity_type}:"
+      type: "MOCK_SETUP"
+      context: "Given"
+      notes: "Parse data table into context for mock configuration. Defined in conftest.py."
+      python_template: |
+        # Defined in tests/integration/conftest.py (reusable across features):
+        @given("系統中存在以下 {entity_type}:")
+        def given_background_entities(datatable: Any, context: dict[str, Any]) -> None:
+            context["background_{entity_key}"] = table_to_dicts(datatable)
 
-  # --- 4. API_ASSERT (Then) ---
-  # Assert status code and response body from context["response"].
-  # Feature-specific — patterns vary per feature.
-  - pattern: '{resource} "{name}" 應成功建立'
-    type: "API_ASSERT"
-    context: "Then"
-    notes: "Assert 201 + name match. Feature-specific."
-    python_template: |
-      @then(parsers.parse('{resource} "{name}" 應成功建立'))
-      def then_created(name: str, context: dict[str, Any], client: TestClient, mock_mcp_repo: AsyncMock) -> None:
-          ensure_called(context, client, mock_mcp_repo)
-          resp = context["response"]
-          assert resp.status_code == 201
-          assert resp.json()["name"] == name
+    - pattern: '使用者 "{user_id}" 已登入且擁有 "{permission}" 權限'
+      type: "MOCK_SETUP"
+      context: "Given"
+      notes: "Auth middleware mock — defined in conftest.py."
+      python_template: |
+        # Defined in tests/integration/conftest.py (reusable):
+        @given(parsers.parse('使用者 "{user_id}" 已登入且擁有 "{permission}" 權限'))
+        def given_user_logged_in(user_id: str, permission: str) -> None:
+            pass  # Handled by app fixture middleware
 
-  - pattern: "創建應失敗"
-    type: "API_ASSERT"
-    context: "Then"
-    notes: "Assert 4xx status. Feature-specific."
-    python_template: |
-      @then("創建應失敗")
-      def then_failed(context: dict[str, Any], client: TestClient, mock_mcp_repo: AsyncMock) -> None:
-          ensure_called(context, client, mock_mcp_repo)
-          assert context["response"].status_code >= 400
+# =============================================================================
+# Layer 2: API — API_COMMAND / QUERY patterns
+# =============================================================================
+# HTTP client flow: context["payload"] ← When, context["response"] ← ensure_called()
 
-  - pattern: '錯誤訊息應提示 "{text}"'
-    type: "API_ASSERT"
-    context: "Then"
-    notes: "Assert error message contains text. Feature-specific."
-    python_template: |
-      @then(parsers.parse('錯誤訊息應提示 "{text}" ...'))
-      def then_error_message(text: str, context: dict[str, Any], client: TestClient, mock_mcp_repo: AsyncMock) -> None:
-          ensure_called(context, client, mock_mcp_repo)
-          body = context["response"].json()
-          assert text in body.get("message", "")
+api:
+  context_flow:
+    when_accumulates: "context['payload']"
+    trigger_stores: "context['response']"
+    trigger_function: "ensure_called(context, client, {{ mock_repo }})"
 
-  # --- 5. DB_ASSERT (Then) ---
-  # Assert mock repository call patterns from context["response"].
-  # Feature-specific — patterns vary per feature.
-  - pattern: "資料庫 {table} 表應包含:"
-    type: "DB_ASSERT"
-    context: "Then"
-    notes: "Assert response body matches field/value table. Feature-specific."
-    python_template: |
-      @then("資料庫 {table} 表應包含:")
-      def then_table_contains(datatable: Any, context: dict[str, Any], client: TestClient, mock_mcp_repo: AsyncMock) -> None:
-          ensure_called(context, client, mock_mcp_repo)
-          body = context["response"].json()
-          for row in table_to_dicts(datatable):
-              assert str(body.get(row["field"])) == row["value"]
+  definitions:
+    # --- API_CALL (When) ---
+    # Parse Gherkin data tables into context["payload"].
+    # The actual HTTP request is NOT fired here — deferred to API_TRIGGER.
+    - pattern: "使用者創建 {resource}:"
+      type: "API_CALL"
+      context: "When"
+      notes: "Parse field/value table into context['payload']. Feature-specific."
+      python_template: |
+        @when("使用者創建 {resource}:")
+        def when_create_{{ domain }}_resource(datatable: Any, context: dict[str, Any]) -> None:
+            for row in table_to_dicts(datatable):
+                context["payload"][row["field"]] = row["value"]
 
-  - pattern: '資料庫 {table} 表不應包含 "{name}"'
-    type: "DB_ASSERT"
-    context: "Then"
-    notes: "Assert mock repo create was NOT called (atomicity). Feature-specific."
-    python_template: |
-      @then(parsers.parse('資料庫 {table} 表不應包含 "{name}"'))
-      def then_no_record(name: str, context: dict[str, Any], client: TestClient, mock_mcp_repo: AsyncMock, mock_repo: AsyncMock) -> None:
-          ensure_called(context, client, mock_mcp_repo)
-          mock_repo.create_agent.assert_not_awaited()
+    - pattern: "同時綁定 {relation}:"
+      type: "API_CALL"
+      context: "When"
+      notes: "Parse ID list table, append to context['payload']. Feature-specific."
+      python_template: |
+        @when("同時綁定 {relation}:")
+        def when_bind_{{ domain }}_relation(datatable: Any, context: dict[str, Any]) -> None:
+            id_column = datatable[0][0]  # e.g. "mcp_id"
+            context["payload"][f"{id_column}s"] = [
+                row[id_column] for row in table_to_dicts(datatable)
+            ]
+
+    # --- API_TRIGGER ---
+    # Bridges API_CALL (When) → API_ASSERT (Then).
+    # Fires the HTTP request ONCE after all When steps complete.
+    # Defined as a helper function in tests/integration/conftest.py.
+    #
+    # IMPORTANT: This is NOT a step definition — it's called by Then steps.
+    # Then steps must call ensure_called() before any assertion.
+    - pattern: "(internal — called by Then steps)"
+      type: "API_TRIGGER"
+      context: "Then (internal)"
+      notes: |
+        ensure_called() is defined in tests/integration/conftest.py.
+        It configures mocks from context["background_*"] + context["payload"],
+        fires the HTTP request, and caches the response in context["response"].
+        Idempotent: fires only once per scenario.
+      python_template: |
+        # Defined in tests/integration/conftest.py (reusable):
+        def ensure_called(
+            context: dict[str, Any],
+            client: TestClient,
+            {{ mock_repo }}: AsyncMock,
+        ) -> None:
+            if context["response"] is not None:
+                return
+            # Configure mocks from context["background_*"] + requested IDs
+            # Fire POST /api/{{ domain }}/... with context["payload"]
+            # Store response in context["response"]
+
+    # --- API_ASSERT (Then) ---
+    # Assert status code and response body from context["response"].
+    # Feature-specific — patterns vary per feature.
+    - pattern: '{resource} "{name}" 應成功建立'
+      type: "API_ASSERT"
+      context: "Then"
+      notes: "Assert 201 + name match. Feature-specific."
+      python_template: |
+        @then(parsers.parse('{resource} "{name}" 應成功建立'))
+        def then_{{ domain }}_created(name: str, context: dict[str, Any], client: TestClient, {{ mock_repo }}: AsyncMock) -> None:
+            ensure_called(context, client, {{ mock_repo }})
+            resp = context["response"]
+            assert resp.status_code == 201
+            assert resp.json()["name"] == name
+
+    - pattern: "創建應失敗"
+      type: "API_ASSERT"
+      context: "Then"
+      notes: "Assert 4xx status. Feature-specific."
+      python_template: |
+        @then("創建應失敗")
+        def then_{{ domain }}_creation_failed(context: dict[str, Any], client: TestClient, {{ mock_repo }}: AsyncMock) -> None:
+            ensure_called(context, client, {{ mock_repo }})
+            assert context["response"].status_code >= 400
+
+    - pattern: '錯誤訊息應提示 "{text}"'
+      type: "API_ASSERT"
+      context: "Then"
+      notes: "Assert error message contains text. Feature-specific."
+      python_template: |
+        @then(parsers.parse('錯誤訊息應提示 "{text}" ...'))
+        def then_{{ domain }}_error_message(text: str, context: dict[str, Any], client: TestClient, {{ mock_repo }}: AsyncMock) -> None:
+            ensure_called(context, client, {{ mock_repo }})
+            body = context["response"].json()
+            assert text in body.get("message", "")
+
+    # --- DB_ASSERT (Then) ---
+    # Assert mock repository call patterns from context["response"].
+    # Feature-specific — patterns vary per feature.
+    - pattern: "資料庫 {table} 表應包含:"
+      type: "DB_ASSERT"
+      context: "Then"
+      notes: "Assert response body matches field/value table. Feature-specific."
+      python_template: |
+        @then("資料庫 {table} 表應包含:")
+        def then_{{ domain }}_table_contains(datatable: Any, context: dict[str, Any], client: TestClient, {{ mock_repo }}: AsyncMock) -> None:
+            ensure_called(context, client, {{ mock_repo }})
+            body = context["response"].json()
+            for row in table_to_dicts(datatable):
+                assert str(body.get(row["field"])) == row["value"]
+
+    - pattern: '資料庫 {table} 表不應包含 "{name}"'
+      type: "DB_ASSERT"
+      context: "Then"
+      notes: "Assert mock repo create was NOT called (atomicity). Feature-specific."
+      python_template: |
+        @then(parsers.parse('資料庫 {table} 表不應包含 "{name}"'))
+        def then_{{ domain }}_no_record(name: str, context: dict[str, Any], client: TestClient, {{ mock_repo }}: AsyncMock) -> None:
+            ensure_called(context, client, {{ mock_repo }})
+            {{ mock_repo }}.create.assert_not_awaited()
+
+# =============================================================================
+# Layer 3: SERVICE — LIFECYCLE_COMMAND patterns
+# =============================================================================
+# Direct service invocation flow:
+#   context["config"]  ← Given (config setup)
+#   context["result"]  ← When (service call return or caught exception)
+
+service:
+  context_flow:
+    given_accumulates: "context['config']"
+    when_stores: "context['result']"
+    description: |
+      No HTTP client involved. When steps call the service method directly.
+      context["result"] stores either the return value or a caught exception.
+
+  definitions:
+    # --- CONFIG_SETUP (Given) ---
+    # Set up configuration objects for the service under test.
+    # Feature-specific — defined in the test file, not conftest.
+    - pattern: "系統設定為:"
+      type: "CONFIG_SETUP"
+      context: "Given"
+      notes: "Parse config data table into context['config']. Feature-specific."
+      python_template: |
+        @given("系統設定為:")
+        def given_{{ domain }}_config(datatable: Any, context: dict[str, Any]) -> None:
+            for row in table_to_dicts(datatable):
+                context["config"][row["field"]] = row["value"]
+
+    - pattern: "環境變數設定如下:"
+      type: "CONFIG_SETUP"
+      context: "Given"
+      notes: "Parse environment config into context['config']. Feature-specific."
+      python_template: |
+        @given("環境變數設定如下:")
+        def given_{{ domain }}_env_config(datatable: Any, context: dict[str, Any]) -> None:
+            for row in table_to_dicts(datatable):
+                context["config"][row["variable"]] = row["value"]
+
+    # --- SERVICE_CALL (When) ---
+    # Invoke the service method directly (no HTTP layer).
+    # Stores return value or caught exception in context["result"].
+    - pattern: "系統執行 {operation}"
+      type: "SERVICE_CALL"
+      context: "When"
+      notes: "Invoke service method directly. Catch exceptions and store in context['result']. Feature-specific."
+      python_template: |
+        @when(parsers.parse("系統執行 {operation}"))
+        def when_execute_{{ feature_slug }}(
+            operation: str,
+            context: dict[str, Any],
+            {{ service }}: {{ domain_capitalized }}Service,
+        ) -> None:
+            try:
+                result = await {{ service }}.{{ method }}()
+                context["result"] = result
+            except Exception as exc:
+                context["result"] = exc
+
+    # --- SERVICE_ASSERT (Then) ---
+    # Assert return value fields from context["result"].
+    # Feature-specific — patterns vary per feature.
+    - pattern: "操作應成功完成"
+      type: "SERVICE_ASSERT"
+      context: "Then"
+      notes: "Assert result is not an exception. Feature-specific."
+      python_template: |
+        @then("操作應成功完成")
+        def then_{{ feature_slug }}_succeeded(context: dict[str, Any]) -> None:
+            result = context["result"]
+            assert not isinstance(result, Exception), f"Expected success, got: {result}"
+
+    - pattern: "結果應包含:"
+      type: "SERVICE_ASSERT"
+      context: "Then"
+      notes: "Assert return value fields match data table. Feature-specific."
+      python_template: |
+        @then("結果應包含:")
+        def then_{{ feature_slug }}_result_contains(datatable: Any, context: dict[str, Any]) -> None:
+            result = context["result"]
+            assert not isinstance(result, Exception), f"Expected success, got: {result}"
+            for row in table_to_dicts(datatable):
+                actual = getattr(result, row["field"], None)
+                assert str(actual) == row["value"], f"{row['field']}: {actual} != {row['value']}"
+
+    - pattern: "應呼叫 {mock_name} 的 {method_name} 方法"
+      type: "SERVICE_ASSERT"
+      context: "Then"
+      notes: "Assert mock repository interaction. Feature-specific."
+      python_template: |
+        @then(parsers.parse("應呼叫 {mock_name} 的 {method_name} 方法"))
+        def then_{{ feature_slug }}_mock_called(
+            mock_name: str,
+            method_name: str,
+            context: dict[str, Any],
+            {{ mock_repo }}: AsyncMock,
+        ) -> None:
+            getattr({{ mock_repo }}, method_name).assert_awaited_once()
+
+    # --- EXCEPTION_ASSERT (Then) ---
+    # Assert exception type and message for fail-fast scenarios.
+    # Feature-specific — patterns vary per feature.
+    - pattern: "操作應失敗"
+      type: "EXCEPTION_ASSERT"
+      context: "Then"
+      notes: "Assert result is an exception. Feature-specific."
+      python_template: |
+        @then("操作應失敗")
+        def then_{{ feature_slug }}_failed(context: dict[str, Any]) -> None:
+            assert isinstance(context["result"], Exception), \
+                f"Expected exception, got: {context['result']}"
+
+    - pattern: '錯誤類型應為 "{exception_type}"'
+      type: "EXCEPTION_ASSERT"
+      context: "Then"
+      notes: "Assert exception class name. Feature-specific."
+      python_template: |
+        @then(parsers.parse('錯誤類型應為 "{exception_type}"'))
+        def then_{{ feature_slug }}_exception_type(exception_type: str, context: dict[str, Any]) -> None:
+            result = context["result"]
+            assert isinstance(result, Exception), f"Expected exception, got: {result}"
+            assert type(result).__name__ == exception_type
+
+    - pattern: '錯誤訊息應包含 "{text}"'
+      type: "EXCEPTION_ASSERT"
+      context: "Then"
+      notes: "Assert exception message contains text. Feature-specific."
+      python_template: |
+        @then(parsers.parse('錯誤訊息應包含 "{text}"'))
+        def then_{{ feature_slug }}_exception_message(text: str, context: dict[str, Any]) -> None:
+            result = context["result"]
+            assert isinstance(result, Exception), f"Expected exception, got: {result}"
+            assert text in str(result), f"'{text}' not in '{result}'"
