@@ -16,6 +16,7 @@
 - [ ] **NOT NULL 驗證**: 列出覆蓋必填欄位缺失的 Scenario 名稱 → _[evidence]_
 - [ ] **UNIQUE 驗證**: 列出覆蓋唯一性約束的 Scenario 名稱 → _[evidence]_
 - [ ] **業務規則驗證**: 列出覆蓋業務邏輯前置條件的 Scenario 名稱 → _[evidence]_
+- [ ] **邊界覆蓋率**: 多子規則約束 (如密碼強度) 是否使用 Scenario Outline + Examples 覆蓋每個子規則？列出每個約束的覆蓋情況 → _[evidence]_
 
 ## Postcondition Coverage
 
@@ -32,7 +33,8 @@
   > Anti-patterns (自動 FAIL): "API response time under 200ms",
   > "Database handles 1000 TPS", "React components render efficiently",
   > "Redis cache hit rate above 80%", 任何提及具體框架/語言/中介軟體的指標。
-  > 正確寫法: "Users see results instantly", "System supports N concurrent users".
+  > 正確寫法: "User receives visual feedback immediately after submission",
+  > "The system remains available and responsive during peak load (N users)".
 
 ## Schema Alignment
 

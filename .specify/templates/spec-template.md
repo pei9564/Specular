@@ -85,6 +85,31 @@
 #
 
 # Annotation: Mark any AI-inferred scenarios with the tag: @auto_generated
+#
+# === BOUNDARY COVERAGE INFERENCE RULE ===
+#
+# For any constraint mentioned in Assumptions, DBML, or business rules:
+#   - Generate at least ONE Scenario per distinct failure mode
+#   - If a constraint has multiple sub-rules (e.g., password requires
+#     "uppercase + lowercase + digit + special character"), use
+#     Scenario Outline with an Examples table to cover each sub-rule:
+#
+#     Scenario Outline: [Failure] 當密碼不符合 <rule> 時，操作應失敗
+#       Given no admin account exists
+#       And the configured password is "<invalid_password>"
+#       When the system executes the command
+#       Then the operation should be rejected
+#       And the error should indicate "<reason>"
+#
+#       Examples:
+#         | rule        | invalid_password | reason                    |
+#         | 缺少大寫    | alllowercase1!   | Must contain uppercase    |
+#         | 缺少數字    | AllLettersOnly!  | Must contain digit        |
+#         | 長度不足    | Sh0rt!           | Minimum 12 characters     |
+#
+#   - Minimum coverage: 1 valid boundary + 1 invalid boundary per constraint
+#   - Do NOT collapse multiple failure modes into a single vague Scenario
+#     (e.g., "invalid password" with only one example is insufficient)
 
 # -------------------------------------------------------------------------
 
