@@ -76,7 +76,27 @@ Given that feature description, do this:
        If empty: ERROR "No feature description provided"
     2. Extract key concepts from description
        Identify: actors, actions, data, constraints
-    3. For unclear aspects:
+    3. For unclear aspects, apply TWO tiers of markers:
+
+       **Tier 1 — Critical Risk Hard Stops** (UNLIMITED, must always mark):
+       If the feature touches ANY of these categories and the behavior is
+       not explicitly defined, you MUST insert a `[CRITICAL: ...]` marker.
+       Do NOT guess. These do NOT count toward the 3-marker limit.
+
+       | Trigger                  | When to fire                                                        |
+       |--------------------------|---------------------------------------------------------------------|
+       | **System Exit Strategy** | Feature involves startup, shutdown, background tasks, or scheduled   |
+       |                          | jobs — AND failure behavior (crash vs degrade) is undefined          |
+       | **Data Integrity**       | Feature involves delete, overwrite, batch update, or concurrent      |
+       |                          | writes — AND rollback/conflict strategy is undefined                 |
+       | **Security Boundary**    | Feature creates or modifies authN/authZ boundaries — AND the         |
+       |                          | permission model or access scope is ambiguous                        |
+
+       Format: `[CRITICAL: <category> — <specific question>]`
+       Example: `[CRITICAL: System Exit Strategy — Should the system abort startup or log a warning and continue if admin creation fails?]`
+
+       **Tier 2 — General Clarifications** (max 3 markers):
+       For all other unclear aspects:
        - Make informed guesses based on context and industry standards
        - Only mark with [NEEDS CLARIFICATION: specific question] if:
          - The choice significantly impacts feature scope or user experience

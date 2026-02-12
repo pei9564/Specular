@@ -66,7 +66,34 @@ Execution steps:
    - Command Feature: Precondition Rules must use "XX 必須/只能 YY"; Postcondition Rules must use "XX 應該 ZZ"
    - Query Feature: Precondition Rules must use "XX 必須/只能 YY"; Success Rules must use "成功查詢應 XX"
 
-8. **@auto_generated Audit**:
+8. **Negative Testing Audit** (MANDATORY):
+
+   a. **[CRITICAL] Marker Resolution**:
+      - Scan `.feature` for all `[CRITICAL: ...]` markers
+      - Each MUST be resolved in this phase — either by asking the user or by
+        making a justified decision based on project context
+      - Resolved markers are replaced with concrete Scenarios or Assumptions
+      - Unresolved `[CRITICAL]` markers block `@ready` transition
+
+   b. **Implicit Critical Risk Detection**:
+      Even if specify did not flag them, proactively scan for:
+      - **System Exit**: Does the feature have startup/shutdown/background/scheduled
+        processes? Is failure behavior (crash vs degrade) defined in a Scenario?
+      - **Data Integrity**: Does the feature involve writes/deletes/updates?
+        Is concurrent access or partial failure covered?
+      - **Security Boundary**: Does the feature involve identity/permissions?
+        Is the principle of least privilege reflected?
+      If any implicit risk is detected without coverage → record as Audit Gate finding
+
+   c. **Reverse Scenario Scan**:
+      For each Success scenario in the `.feature` file, ask:
+      - "What if the step before this one failed?" (upstream failure)
+      - "What if this step was interrupted midway?" (partial completion)
+      - "What if this step was executed concurrently?" (race condition)
+      If any answer has no corresponding Scenario in `.feature` → record as
+      boundary risk in Audit Gate
+
+9. **@auto_generated Audit**:
    - Review scenarios tagged `@auto_generated`
    - Flag any that seem redundant or logically impossible
 

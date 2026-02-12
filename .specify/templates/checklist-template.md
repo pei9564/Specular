@@ -28,6 +28,11 @@
 - [ ] **無實作細節**: 引述任何提及技術實作的段落（若無則標記 PASS 並說明掃描範圍） → _[evidence]_
 - [ ] **Success Criteria 可量測**: 逐條列出每個 criterion 及其量測方式 → _[evidence]_
 - [ ] **Success Criteria 無技術用語**: 確認無框架/語言/資料庫等技術名詞 → _[evidence]_
+  > Litmus test: 非技術人員能否驗證此 criterion？若否則 FAIL。
+  > Anti-patterns (自動 FAIL): "API response time under 200ms",
+  > "Database handles 1000 TPS", "React components render efficiently",
+  > "Redis cache hit rate above 80%", 任何提及具體框架/語言/中介軟體的指標。
+  > 正確寫法: "Users see results instantly", "System supports N concurrent users".
 
 ## Schema Alignment
 
@@ -40,6 +45,15 @@
 - [ ] **假設已記錄**: 引述 Assumptions 段落 → _[evidence]_
 - [ ] **命名規範**: Precondition Rule 使用 "XX 必須/只能 YY"；Postcondition Rule 使用 "XX 應該 ZZ" → _[evidence]_
 
+## Critical Risk Resolution
+
+- [ ] **[CRITICAL] markers 全數解決**: 列出每個 `[CRITICAL]` marker 及其解決方式 → _[evidence]_
+- [ ] **System Exit Strategy**: 若 feature 涉及啟動/背景/排程流程，失敗行為已有明確 Scenario → _[evidence or N/A]_
+- [ ] **Data Integrity**: 若 feature 涉及寫入/刪除/更新，回滾/衝突策略已有明確 Scenario → _[evidence or N/A]_
+- [ ] **Security Boundary**: 若 feature 涉及 authN/authZ，權限模型已有明確 Scenario → _[evidence or N/A]_
+
+> Items marked N/A must include a one-line justification (e.g., "Feature is read-only, no write operations").
+
 ## Audit Gate (MANDATORY — clarify MUST fill these)
 
 - [ ] **至少 1 項改善建議**: 描述發現的可優化點或潛在風險 → _[finding]_
@@ -48,6 +62,8 @@
 > If unable to identify findings for the Audit Gate, re-examine with adversarial lens:
 > "What would a hostile user, edge case, or race condition break?"
 > The audit is NOT complete until both Audit Gate items are filled.
+> Reverse Scenario Scan findings (upstream failure, partial completion, race condition)
+> should be recorded here as boundary risks.
 
 ## Notes
 
