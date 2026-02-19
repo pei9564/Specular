@@ -223,6 +223,12 @@ service:
     description: |
       No HTTP client involved. When steps call the service method directly.
       context["result"] stores either the return value or a caught exception.
+    fixture_assembly: |
+      LIFECYCLE_COMMAND services are NOT pytest fixtures when config varies per-scenario.
+      The Service must be constructed inside the When step from context["config"]:
+        service = DomainService(repo=mock_repo, config=context["config"])
+        context["result"] = await service.method()
+      Only use a fixture if ALL scenarios share the same config (rare).
 
   definitions:
     # --- CONFIG_SETUP (Given) ---

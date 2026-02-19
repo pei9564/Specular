@@ -103,6 +103,12 @@ class {{ domain_capitalized }}Service:
   For LIFECYCLE_COMMAND features, the Service is not invoked by a Router.
   Document how the Service is instantiated and called during the system event.
   For API_COMMAND / QUERY, delete this subsection — the Router handles wiring via Depends().
+
+  IMPORTANT — deferred repository: If no concrete repository implementation exists yet,
+  keep `raise NotImplementedError("Wiring pending implementation.")` as the stub.
+  Do NOT substitute an InMemoryRepository — it loses all state on restart, which
+  silently breaks idempotency (every restart re-creates records that should exist).
+  Record the missing implementation as a dependency in §9 Deviation Log.
 -->
 
 > **Instruction**: Define how the Service is assembled and invoked at the trigger point.
@@ -158,6 +164,11 @@ docker compose run --rm app <command>
 > **Pattern selection by Execution Type**:
 > - **API_COMMAND / QUERY**: Use `API_CALL` / `API_ASSERT` patterns (tests use HTTP client)
 > - **LIFECYCLE_COMMAND**: Use `SERVICE_CALL` / `SERVICE_ASSERT` patterns (tests invoke Service directly)
+>
+> **When step parameter variants**: If a `When` step has a parameterised form
+> (e.g., `When the system executes ... with username "admin"`), it needs its own
+> `@when(parsers.parse(...))` step definition — it cannot share the bare `@when`
+> of the parameter-free variant. Flag these in the mapping table with a `[param]` note.
 
 ### ISA Pattern Reference
 
